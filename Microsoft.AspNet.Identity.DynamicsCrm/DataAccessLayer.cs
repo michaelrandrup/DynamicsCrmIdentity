@@ -1,4 +1,5 @@
-﻿using Microsoft.Xrm.Client;
+﻿using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -16,7 +17,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
     // Url=https://contoso.crm.dynamics.com; Username=jsmith@live-int.com; Password=passcode; DeviceID=contoso-ba9f6b7b2e6d; DevicePassword=passcode
     public static class XrmConnection
     {
-        
+
 
         private static CrmConnection _Connection = null;
         public static CrmConnection Connection
@@ -43,7 +44,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
         }
 
-        
+
 
         #region Public Properties
 
@@ -58,6 +59,16 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
     }
 
+    public static class XrmMarketing
+    {
+        public static void AddToMarketingList(Guid[] listMembers, Guid listId)
+        {
+            AddListMembersListRequest request = new Crm.Sdk.Messages.AddListMembersListRequest();
+            request.MemberIds = listMembers;
+            request.ListId = listId;
+            AddListMembersListResponse response = XrmCore.Execute<AddListMembersListRequest, AddListMembersListResponse>(request);
+        }
+    }
     public static class XrmLead
     {
         public static bool CreateLead(string subject, string firstName, string lastName, string companyName, string email, CrmConnection connection = null)
@@ -65,9 +76,46 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
             throw new NotImplementedException();
         }
 
-        public static bool CreateLoad(NameValueCollection formCollection)
+
+
+        public static Guid CreateLead(NameValueCollection formCollection)
         {
-            throw new NotImplementedException();
+            string LeadId = formCollection.Get("leadid");
+            Entity lead = new Entity("lead", Guid.NewGuid());
+            Guid id = Guid.Empty;
+            if (!string.IsNullOrEmpty(LeadId) && Guid.TryParse(LeadId, out id))
+            {
+                lead = XrmCore.Retrieve("lead", id);
+            }
+
+            string Email = formCollection.Get("emailaddress1");
+            if (!string.IsNullOrEmpty(Email))
+            {
+                EntityCollection contacts = XrmCore.RetrieveByAttribute("contact", "emailaddress1", Email);
+                if (contacts.Entities.Count > 0)
+                {
+                    Entity contact = contacts.Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).First();
+                    lead["contactid"] = contact.ToEntityReference();
+                    if (contact.Contains("accountid"))
+                    {
+                        lead["accountid"] = contact.GetAttributeValue<EntityReference>("accountid");
+                    }
+                }
+            }
+            foreach (string key in formCollection.AllKeys.Except(new string[] { "leadid" }))
+            {
+                lead[key] = formCollection[key];
+            }
+            if (id.Equals(Guid.Empty))
+            {
+                id = XrmCore.CreateEntity(lead);
+            }
+            else
+            {
+                XrmCore.UpdateEntity(lead);
+                id = lead.Id;
+            }
+            return id;
         }
     }
 
@@ -80,8 +128,20 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
             {
                 return service.Retrieve(EntityName, Id, Columns);
             }
-
         }
+
+        public static TResponse Execute<TRequest, TResponse>(TRequest request, CrmConnection connection = null)
+            where TRequest : OrganizationRequest
+            where TResponse : OrganizationResponse
+        {
+            OrganizationService srv = new OrganizationService(connection ?? XrmConnection.Connection);
+            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+            {
+                return (TResponse)service.Execute(request);
+            }
+        }
+
+
         public static EntityCollection RetrieveByAttribute(string EntityName, string AttributeName, string AttributeValue, CrmConnection connection = null, bool CacheResults = true)
         {
             FilterExpression filter = new FilterExpression(LogicalOperator.And);

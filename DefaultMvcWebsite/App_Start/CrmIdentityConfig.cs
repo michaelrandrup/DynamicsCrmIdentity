@@ -33,7 +33,7 @@ namespace DefaultMvcWebsite
         }
     }
 
-    // Configure the application user manager used in this application. UserManager is defined in ASP.NET Identity and is used by the application.
+     
     public class ApplicationUserManager : UserManager<CrmIdentityUser>
     {
         public ApplicationUserManager(IUserStore<CrmIdentityUser> store)
@@ -41,12 +41,43 @@ namespace DefaultMvcWebsite
         {
         }
 
+        /// <summary>
+        /// This static method is setup as a delegate in Startup.Auth and will be called each time a userIdentity is created
+        /// </summary>
+        /// <param name="userIdentity">the ClaimsIdentity created from CRM</param>
+        /// <param name="manager">the user manager used to add claims in the CRM storage</param>
+        public static async Task AddCustomUserClaims(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser> manager)
+        {
+            // Here you can add your custom claims to the userIdentity
+            // Below is an example of how to add a custom claim:
+
+            // Check if the customClaim has been retrieved from CRM storage
+            if (!userIdentity.HasClaim("MyClaimType","MyClaimValue"))
+            {
+                // Add the claim to the CRM Claim storage
+                System.Security.Claims.Claim customClaim = new Claim("MyClaimType","MyClaimValue");
+                IdentityResult result = await manager.AddClaimAsync(userIdentity.GetUserId(), customClaim);
+                
+                // If all goes well, add the claim to the userIdentity. Next time the user logs in 
+                if (result.Succeeded)
+                {
+                    userIdentity.AddClaim(customClaim);
+                }
+                else
+                {
+                    // Handle the error
+                }
+            }
+            
+        }
+
+
         public static ApplicationUserManager Create(IdentityFactoryOptions<ApplicationUserManager> options, IOwinContext context)
         {
             
             
-            // var manager = new ApplicationUserManager(new UserStore<ApplicationUser>(context.Get<ApplicationDbContext>()));
             var manager = new ApplicationUserManager(new Microsoft.AspNet.Identity.DynamicsCrm.UserStore());
+            
             // Configure validation logic for usernames
             manager.UserValidator = new UserValidator<CrmIdentityUser>(manager)
             {
@@ -92,7 +123,7 @@ namespace DefaultMvcWebsite
         }
     }
 
-    // Configure the application sign-in manager which is used in this application.
+     
     public class ApplicationSignInManager : SignInManager<CrmIdentityUser, string>
     {
         public ApplicationSignInManager(ApplicationUserManager userManager, IAuthenticationManager authenticationManager)
@@ -110,4 +141,6 @@ namespace DefaultMvcWebsite
             return new ApplicationSignInManager(context.GetUserManager<ApplicationUserManager>(), context.Authentication);
         }
     }
+
+
 }

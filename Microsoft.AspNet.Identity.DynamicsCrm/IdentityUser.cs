@@ -130,6 +130,11 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             return ConvertToEntity(this);
         }
 
+        public virtual EntityReference AsEntityReference()
+        {
+            return new EntityReference("appl_webuser", new Guid(this.Id));
+        }
+
         protected static void FillEntity(Entity entity, CrmIdentityUser user)
         {
             entity["appl_accessfailedcount"] = user.AccessFailedCount;
@@ -162,21 +167,20 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             user.ContactId = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
         }
 
-        public async Task<System.Security.Claims.ClaimsIdentity> GenerateUserIdentityAsync(UserManager<CrmIdentityUser> manager)
+        
+        
+        public delegate Task AddCustomClaimsToIdentityDelegate(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser> manager);
+        public static AddCustomClaimsToIdentityDelegate AddCustomClaimsToIdentity = null;
+        
+
+        public virtual async Task<System.Security.Claims.ClaimsIdentity> GenerateUserIdentityAsync(UserManager<CrmIdentityUser> manager)
         {
-            
-            
-            
-            
             // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
             var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
-            // Add custom user claims here
-            if (!userIdentity.HasClaim(x => x.Type.Equals("contactid")))
+            if (AddCustomClaimsToIdentity != null)
             {
-                userIdentity.AddClaim(new System.Security.Claims.Claim("contactid", this.ContactId.Id.ToString()));
-                await manager.AddToRoleAsync(userIdentity.GetUserId(), "Customer");
+                await AddCustomClaimsToIdentity(userIdentity, manager);
             }
-            
             
             return userIdentity;
         }

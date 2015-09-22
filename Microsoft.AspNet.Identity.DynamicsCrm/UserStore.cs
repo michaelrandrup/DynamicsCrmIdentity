@@ -135,12 +135,11 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         {
             return Task.Factory.StartNew(() =>
             {
-                EntityCollection col = new EntityCollection() { EntityName = "appl_webuserclaim" };
-                Entity e = new Entity("appl_webuserclaim");
+                Entity e = new Entity("appl_webuserclaim",Guid.NewGuid());
                 e["appl_claimtype"] = claim.Type;
                 e["appl_claimvalue"] = claim.Value;
-                col.Entities.Add(e);
-                DAL.XrmCore.AddRelated(new Entity("appl_webuser", new Guid(user.Id)), col, "appl_webuser_appl_webuserclaim");
+                e["appl_webuserid"] = user.AsEntityReference();
+                DAL.XrmCore.CreateEntity(e);
             });
         }
 
