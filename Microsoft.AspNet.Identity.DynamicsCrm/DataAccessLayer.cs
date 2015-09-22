@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.ServiceModel;
 using System.Text;
@@ -28,12 +29,16 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
                 }
                 return _Connection;
             }
+            internal set
+            {
+                _Connection = value;
+            }
         }
 
         private static void InitializeConnection(string Name)
         {
             string connectionString = System.Web.Configuration.WebConfigurationManager.ConnectionStrings[Name ?? ConnectionName].ConnectionString;
-            CrmConnection con = CrmConnection.Parse(connectionString);
+            _Connection = CrmConnection.Parse(connectionString);
 
 
         }
@@ -51,6 +56,19 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
         #endregion
 
+    }
+
+    public static class XrmLead
+    {
+        public static bool CreateLead(string subject, string firstName, string lastName, string companyName, string email, CrmConnection connection = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static bool CreateLoad(NameValueCollection formCollection)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public static class XrmCore
@@ -194,17 +212,34 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
             return null;
         }
 
-        public static EntityCollection GetRelated(Entity PrimaryEntity, string RelatedEntityName, string ForeignKeyField, CrmConnection connection = null)
+        public static EntityCollection GetRelated(Entity PrimaryEntity, string RelatedEntityName, string ForeignKeyField, CrmConnection connection = null, bool CacheResults = true)
         {
-            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(connection ?? XrmConnection.Connection))
+            if (CacheResults)
             {
-                IQueryable<Entity> query = from entity in service.CreateQuery(RelatedEntityName)
-                                           where (Guid)entity[ForeignKeyField] == PrimaryEntity.Id
-                                           select entity;
+                using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(connection ?? XrmConnection.Connection))
+                {
+                    IQueryable<Entity> query = from entity in service.CreateQuery(RelatedEntityName)
+                                               where (Guid)entity[ForeignKeyField] == PrimaryEntity.Id
+                                               select entity;
 
-                EntityCollection col = new EntityCollection(query.ToList());
-                col.EntityName = RelatedEntityName;
-                return col;
+                    EntityCollection col = new EntityCollection(query.ToList());
+                    col.EntityName = RelatedEntityName;
+                    return col;
+                }
+            }
+            else
+            {
+                OrganizationService srv = new OrganizationService(connection ?? XrmConnection.Connection);
+                using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+                {
+                    IQueryable<Entity> query = from entity in service.CreateQuery(RelatedEntityName)
+                                               where (Guid)entity[ForeignKeyField] == PrimaryEntity.Id
+                                               select entity;
+
+                    EntityCollection col = new EntityCollection(query.ToList());
+                    col.EntityName = RelatedEntityName;
+                    return col;
+                }
             }
         }
 

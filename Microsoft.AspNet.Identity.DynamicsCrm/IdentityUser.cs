@@ -1,4 +1,5 @@
-﻿using Microsoft.Xrm.Sdk;
+﻿using Microsoft.IdentityModel.Claims;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,30 @@ using System.Threading.Tasks;
 
 namespace Microsoft.AspNet.Identity.DynamicsCrm
 {
-    public class IdentityUser : IUser<Guid>
+    
+
+    public class CrmIdentityUser : IUser<string>, IUser
     {
+        /// <summary>
+        /// Default constructor 
+        /// </summary>
+        public CrmIdentityUser()
+        {
+            Id = Guid.NewGuid().ToString();
+            SecurityStamp = Guid.NewGuid().ToString();
+        }
+        /// <summary>
+        /// Constructor that takes user name as argument
+        /// </summary>
+        /// <param name="userName"></param>
+        public CrmIdentityUser(string userName)
+            : this()
+        {
+            UserName = userName;
+        }
+
+
+
         #region Crm Properties
         private string _EntityName = "appl_webuser";
 
@@ -21,28 +44,14 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         #endregion
 
 
-        /// <summary>
-        /// Default constructor 
-        /// </summary>
-        public IdentityUser()
-        {
-            Id = Guid.Empty;
-        }
+        
 
-        /// <summary>
-        /// Constructor that takes user name as argument
-        /// </summary>
-        /// <param name="userName"></param>
-        public IdentityUser(string userName)
-            : this()
-        {
-            UserName = userName;
-        }
+        
 
         /// <summary>
         /// User ID
         /// </summary>
-        public Guid Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// User's name
@@ -99,17 +108,18 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         /// </summary>
         public virtual int AccessFailedCount { get; set; }
 
+        public EntityReference ContactId { get; set; }
 
-        internal static Entity ConvertToEntity(IdentityUser user)
+        internal static Entity ConvertToEntity(CrmIdentityUser user)
         {
-            Entity e = new Entity(user.EntityName, user.Id);
-            FillEntity(e,user);
+            Entity e = new Entity(user.EntityName, new Guid(user.Id));
+            FillEntity(e, user);
             return e;
         }
 
-        internal static IdentityUser ConvertToIdentityUser(Entity entity)
+        internal static CrmIdentityUser ConvertToIdentityUser(Entity entity)
         {
-            IdentityUser user = new IdentityUser() { EntityName = entity.LogicalName, Id = entity.Id };
+            CrmIdentityUser user = new CrmIdentityUser() { EntityName = entity.LogicalName, Id = entity.Id.ToString() };
             FillIdentityUser(user, entity);
             return user;
 
@@ -120,15 +130,131 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             return ConvertToEntity(this);
         }
 
-        protected static void FillEntity(Entity entity, IdentityUser user)
+        protected static void FillEntity(Entity entity, CrmIdentityUser user)
         {
+            entity["appl_accessfailedcount"] = user.AccessFailedCount;
+            entity["appl_email"] = user.Email;
+            entity["appl_emailconfirmed"] = user.EmailConfirmed;
+            entity["appl_lockoutenabled"] = user.LockoutEnabled;
+            entity["appl_lockoutenddateutc"] = user.LockoutEndDateUtc.HasValue ? user.LockoutEndDateUtc.Value.ToUniversalTime() : (DateTime?)null;
+            entity["appl_passwordhash"] = user.PasswordHash;
+            entity["appl_phonenumber"] = user.PhoneNumber;
+            entity["appl_phonenumberconfirmed"] = user.PhoneNumberConfirmed;
+            entity["appl_twofactorenabled"] = user.TwoFactorEnabled;
+            entity["appl_username"] = user.UserName;
+            entity["appl_contactid"] = user.ContactId;
+
+
 
         }
-        protected static void FillIdentityUser(IdentityUser user,Entity entity)
+        protected static void FillIdentityUser(CrmIdentityUser user, Entity entity)
         {
-
+            user.AccessFailedCount = entity.GetAttributeValue<int>("appl_accessfailedcount");
+            user.Email = entity.GetAttributeValue<string>("appl_email");
+            user.EmailConfirmed = entity.GetAttributeValue<bool>("appl_emailconfirmed");
+            user.LockoutEnabled = entity.GetAttributeValue<bool>("appl_lockoutenabled");
+            user.LockoutEndDateUtc = entity.GetAttributeValue<DateTime?>("appl_lockoutenddateutc");
+            user.PasswordHash = entity.GetAttributeValue<string>("appl_passwordhash");
+            user.PhoneNumber = entity.GetAttributeValue<string>("appl_phonenumber");
+            user.PhoneNumberConfirmed = entity.GetAttributeValue<bool>("appl_phonenumberconfirmed");
+            user.TwoFactorEnabled = entity.GetAttributeValue<bool>("appl_twofactorenabled");
+            user.UserName = entity.GetAttributeValue<string>("appl_username");
+            user.ContactId = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
         }
-        
-       
+
+        public async Task<System.Security.Claims.ClaimsIdentity> GenerateUserIdentityAsync(UserManager<CrmIdentityUser> manager)
+        {
+            
+            
+            
+            
+            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
+            var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
+            // Add custom user claims here
+            if (!userIdentity.HasClaim(x => x.Type.Equals("contactid")))
+            {
+                userIdentity.AddClaim(new System.Security.Claims.Claim("contactid", this.ContactId.Id.ToString()));
+                await manager.AddToRoleAsync(userIdentity.GetUserId(), "Customer");
+            }
+            
+            
+            return userIdentity;
+        }
+
+
+        string IUser<string>.Id
+        {
+            get { return this.Id.ToString(); }
+        }
     }
+
+
+
+    //public class IdentityUserLogin
+    //{
+    //    public IdentityUserLogin();
+
+    //    // Summary:
+    //    //     The login provider for the login (i.e. facebook, google)
+    //    public virtual string LoginProvider { get; set; }
+    //    //
+    //    // Summary:
+    //    //     Key representing the login for the provider
+    //    public virtual string ProviderKey { get; set; }
+    //    //
+    //    // Summary:
+    //    //     User Id for the user who owns this login
+    //    public virtual string UserId { get; set; }
+    //}
+
+    //// Summary:
+    ////     EntityType that represents a user belonging to a role
+    ////
+    //// Type parameters:
+    ////   TKey:
+    //public class IdentityUserRole<TKey>
+    //{
+    //    public IdentityUserRole();
+
+    //    // Summary:
+    //    //     RoleId for the role
+    //    public virtual TKey RoleId { get; set; }
+    //    //
+    //    // Summary:
+    //    //     UserId for the user that is in the role
+    //    public virtual TKey UserId { get; set; }
+    //}
+
+
+    //// Summary:
+    ////     EntityType that represents one specific user claim
+    ////
+    //// Type parameters:
+    ////   TKey:
+    //public class IdentityUserClaim<TKey>
+    //{
+    //    public IdentityUserClaim()
+    //    {
+
+    //    }
+
+    //    // Summary:
+    //    //     Claim type
+    //    public virtual string ClaimType { get; set; }
+    //    //
+    //    // Summary:
+    //    //     Claim value
+    //    public virtual string ClaimValue { get; set; }
+    //    //
+    //    // Summary:
+    //    //     Primary key
+    //    public virtual int Id { get; set; }
+    //    //
+    //    // Summary:
+    //    //     User Id for the user who owns this login
+    //    public virtual TKey UserId { get; set; }
+    //}
+
+
+
 }

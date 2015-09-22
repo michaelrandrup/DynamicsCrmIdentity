@@ -75,6 +75,8 @@ namespace DefaultMvcWebsite.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
+            // Microsoft.AspNet.Identity.EntityFramework.UserStore<ApplicationUser>
+            
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
