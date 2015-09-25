@@ -139,6 +139,8 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
                 e["appl_claimtype"] = claim.Type;
                 e["appl_claimvalue"] = claim.Value;
                 e["appl_webuserid"] = user.AsEntityReference();
+                
+                
                 DAL.XrmCore.CreateEntity(e);
             });
         }

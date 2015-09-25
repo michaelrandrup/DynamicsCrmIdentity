@@ -68,7 +68,45 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
             request.ListId = listId;
             AddListMembersListResponse response = XrmCore.Execute<AddListMembersListRequest, AddListMembersListResponse>(request);
         }
+
+        public static void RemoveFromMarketingList(Guid listMember, Guid listId)
+        {
+
+            RemoveMemberListRequest request = new Crm.Sdk.Messages.RemoveMemberListRequest();
+            request.EntityId = listMember;
+            request.ListId = listId;
+            RemoveMemberListResponse response = XrmCore.Execute<RemoveMemberListRequest, RemoveMemberListResponse>(request);
+        }
     }
+
+    public static class XrmProfile
+    {
+        public static Profile GetProfile(string ProfileName)
+        {
+            FilterExpression filter = new FilterExpression(LogicalOperator.And);
+            filter.AddCondition(new ConditionExpression("appl_name", ConditionOperator.Equal, ProfileName));
+            EntityCollection col = XrmCore.RetrieveByFilter("appl_profiledefinition", filter);
+            if (col.Entities.Count != 1)
+            {
+                throw new Exception(string.Format("There are {0} profiles with the name {1}. 1 was expected", col.Entities.Count, ProfileName));
+            }
+
+            Guid ProfileDefinitionId = col.Entities.First().GetAttributeValue<Guid>("appl_profiledefinitionid");
+
+            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(XrmConnection.Connection))
+            {
+                IQueryable<Entity> query = from field in service.CreateQuery("appl_profilefield")
+                                           join related in service.CreateQuery("appl_profilefield_appl_profiledefinitio") on field["appl_profilefieldid"] equals related["appl_profilefieldid"]
+                                           join profiledef in service.CreateQuery("appl_profiledefinition") on related["appl_profiledefinitionid"] equals profiledef["appl_profiledefinitionid"]
+                                           where profiledef["appl_name"] == ProfileName
+                                           select field;
+
+                return Profile.Factory(new EntityCollection(query.ToList()), ProfileDefinitionId);
+            }
+        }
+    }
+
+
     public static class XrmLead
     {
         public static bool CreateLead(string subject, string firstName, string lastName, string companyName, string email, CrmConnection connection = null)
