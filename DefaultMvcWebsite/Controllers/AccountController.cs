@@ -10,6 +10,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using DefaultMvcWebsite.Models;
 using Microsoft.AspNet.Identity.DynamicsCrm;
+using Microsoft.AspNet.Identity.DynamicsCrm.DAL;
 
 namespace DefaultMvcWebsite.Controllers
 {
@@ -77,7 +78,14 @@ namespace DefaultMvcWebsite.Controllers
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
             // Microsoft.AspNet.Identity.EntityFramework.UserStore<ApplicationUser>
-            
+
+
+
+            //((ApplicationUserManager)UserManager).CrmStore.HashAllPasswords((pwd) =>
+            //{
+            //    return UserManager.PasswordHasher.HashPassword(pwd);
+            //});
+
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
@@ -92,6 +100,14 @@ namespace DefaultMvcWebsite.Controllers
                     ModelState.AddModelError("", "Invalid login attempt.");
                     return View(model);
             }
+        }
+
+        public ActionResult Profile()
+        {
+             var crmUser = UserManager.FindById(User.Identity.GetUserId());
+            Profile definition = XrmProfile.GetProfile("ClickLearn Requirements");
+            UserProfile profile = XrmProfile.GetUserProfile(crmUser.ContactId, "ClickLearn Requirements");
+            return View();
         }
 
         //

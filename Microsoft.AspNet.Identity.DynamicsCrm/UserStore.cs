@@ -19,7 +19,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
                 EntityCollection col = DAL.XrmCore.RetrieveByAttribute("contact", "emailaddress1", user.Email);
                 if (col.Entities.Count > 0)
                 {
-                    user.ContactId = col.Entities.First().ToEntityReference();
+                    user.Contact = col.Entities.First().ToEntityReference();
                 }
                 DAL.XrmCore.CreateEntity(user.AsEntity());
             });
@@ -64,6 +64,11 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         {
             DAL.XrmConnection.Connection = null;
             // throw new NotImplementedException();
+        }
+
+        public void HashAllPasswords(Func<string, string> PasswordHasher)
+        {
+            DAL.XrmCore.HashAllPasswords(PasswordHasher);
         }
 
         #endregion

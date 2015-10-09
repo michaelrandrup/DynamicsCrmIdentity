@@ -39,6 +39,15 @@ namespace DefaultMvcWebsite
         public ApplicationUserManager(IUserStore<CrmIdentityUser> store)
             : base(store)
         {
+            
+        }
+
+        public Microsoft.AspNet.Identity.DynamicsCrm.UserStore CrmStore
+        {
+            get
+            {
+                return (Microsoft.AspNet.Identity.DynamicsCrm.UserStore)this.Store;
+            }
         }
 
         /// <summary>

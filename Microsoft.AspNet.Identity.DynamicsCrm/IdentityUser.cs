@@ -108,7 +108,22 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         /// </summary>
         public virtual int AccessFailedCount { get; set; }
 
-        public EntityReference ContactId { get; set; }
+        public EntityReference Contact { get; set; }
+
+        public Guid ContactId
+        {
+            get
+            {
+                if (Contact != null)
+                {
+                    return Contact.Id;
+                }
+                else
+                {
+                    return Guid.Empty;
+                }
+            }
+        }
 
         internal static Entity ConvertToEntity(CrmIdentityUser user)
         {
@@ -147,7 +162,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             entity["appl_phonenumberconfirmed"] = user.PhoneNumberConfirmed;
             entity["appl_twofactorenabled"] = user.TwoFactorEnabled;
             entity["appl_username"] = user.UserName;
-            entity["appl_contactid"] = user.ContactId;
+            entity["appl_contactid"] = user.Contact;
 
 
 
@@ -164,7 +179,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             user.PhoneNumberConfirmed = entity.GetAttributeValue<bool>("appl_phonenumberconfirmed");
             user.TwoFactorEnabled = entity.GetAttributeValue<bool>("appl_twofactorenabled");
             user.UserName = entity.GetAttributeValue<string>("appl_username");
-            user.ContactId = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
+            user.Contact = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
         }
 
         

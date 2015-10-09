@@ -81,6 +81,51 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
     public static class XrmProfile
     {
+        private static EntityCollection GetUserProfiles(Guid ContactId, Guid? ProfileId)
+        {
+            if (ProfileId.HasValue)
+            {
+                OrganizationService srv = new OrganizationService(XrmConnection.Connection);
+                using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+                {
+                    IQueryable<Entity> query = from entity in service.CreateQuery("appl_membershipprofile")
+                                               where (Guid)entity["appl_contactid"] == ContactId && (Guid)entity["appl_profiledefinitionid"] == ProfileId.Value
+                                               select entity;
+
+                    EntityCollection col = new EntityCollection(query.ToList());
+                    col.EntityName = "appl_membershipprofile";
+                    return col;
+                }
+            }
+            else
+            {
+                return XrmCore.GetRelated(new Entity("contact", ContactId), "appl_membershipprofile", "appl_contactid", CacheResults: false);
+            }
+        }
+        public static UserProfile GetUserProfile(Guid ContactId, Profile ProfileDefinition)
+        {
+            return UserProfile.Factory(ContactId, GetUserProfiles(ContactId, ProfileDefinition.Id), ProfileDefinition);
+        }
+
+        public static UserProfile GetUserProfile(Guid ContactId, string ProfileDefinition)
+        {
+            Profile profile = GetProfile(ProfileDefinition);
+            return UserProfile.Factory(ContactId, GetUserProfiles(ContactId, profile.Id), profile);
+        }
+
+        public static UserProfile GetUserProfile(Profile ProfileDefinition)
+        {
+            return UserProfile.Factory(ProfileDefinition);
+        }
+
+        public static bool UpdateUserProfile(UserProfile Profiles)
+        {
+            EntityCollection collection = new EntityCollection();
+            collection.EntityName = "appl_membershipprofile";
+            Profiles.Fields.ForEach(profile => collection.Entities.Add(profile.ToEntity()));
+            return XrmCore.BulkSave(collection);
+        }
+
         public static Profile GetProfile(string ProfileName)
         {
             FilterExpression filter = new FilterExpression(LogicalOperator.And);
@@ -98,7 +143,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
                 IQueryable<Entity> query = from field in service.CreateQuery("appl_profilefield")
                                            join related in service.CreateQuery("appl_profilefield_appl_profiledefinitio") on field["appl_profilefieldid"] equals related["appl_profilefieldid"]
                                            join profiledef in service.CreateQuery("appl_profiledefinition") on related["appl_profiledefinitionid"] equals profiledef["appl_profiledefinitionid"]
-                                           where profiledef["appl_name"] == ProfileName
+                                           where (string)profiledef["appl_name"] == ProfileName
                                            select field;
 
                 return Profile.Factory(new EntityCollection(query.ToList()), ProfileDefinitionId);
@@ -109,9 +154,39 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
     public static class XrmLead
     {
-        public static bool CreateLead(string subject, string firstName, string lastName, string companyName, string email, CrmConnection connection = null)
+        public static Guid CreateLead(string subject, string description, string firstName, string lastName, string companyName, string email, NameValueCollection otherFields, CrmConnection connection = null)
         {
-            throw new NotImplementedException();
+            Entity lead = new Entity("lead", Guid.NewGuid());
+            if (!string.IsNullOrEmpty(email))
+            {
+                lead["emailaddress1"] = email;
+                EntityCollection contacts = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email);
+                if (contacts.Entities.Count > 0)
+                {
+                    Entity contact = contacts.Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).First();
+                    lead["contactid"] = contact.ToEntityReference();
+                    if (contact.Contains("accountid"))
+                    {
+                        lead["accountid"] = contact.GetAttributeValue<EntityReference>("accountid");
+                    }
+                }
+            }
+            lead["subject"] = subject;
+            lead["firstname"] = firstName;
+            lead["lastname"] = lastName;
+            lead["companyname"] = companyName;
+            lead["description"] = description;
+
+            if (otherFields != null && otherFields.Count > 0)
+            {
+                foreach (string key in otherFields.AllKeys)
+                {
+                    lead[key] = otherFields[key];
+                }
+            }
+
+            return DAL.XrmCore.CreateEntity(lead);
+
         }
 
 
@@ -159,6 +234,31 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
 
     public static class XrmCore
     {
+        public static void HashAllPasswords(Func<string, string> PasswordHasher)
+        {
+            OrganizationService srv = new OrganizationService(XrmConnection.Connection);
+            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+            {
+                IQueryable<Entity> query = from member in service.CreateQuery("appl_webuser")
+                                           select member;
+
+
+                foreach (Entity e in query.ToList())
+                {
+                    string password = e.GetAttributeValue<string>("appl_passwordhash");
+                    if (!string.IsNullOrEmpty(password) && password.Length < 15)
+                    {
+                        string hash = PasswordHasher(password);
+                        e["appl_passwordhash"] = hash;
+                        // e.EntityState = EntityState.Changed;
+                        service.UpdateObject(e);
+                    }
+                }
+                service.SaveChanges();
+            }
+
+
+        }
         public static Entity Retrieve(string EntityName, Guid Id, ColumnSet Columns = null, CrmConnection connection = null)
         {
             Columns = Columns ?? new ColumnSet(true);
@@ -241,6 +341,28 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
                     }
                     return ResultCollection;
                 }
+            }
+        }
+
+        public static bool BulkSave(EntityCollection entities, CrmConnection connection = null)
+        {
+            OrganizationService srv = new OrganizationService(connection ?? XrmConnection.Connection);
+            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+            {
+                foreach (Entity e in entities.Entities)
+                {
+                    if (e.Id.Equals(Guid.Empty))
+                    {
+                        e.Id = Guid.NewGuid();
+                        service.AddObject(e);
+                    }
+                    else
+                    {
+                        service.UpdateObject(e);
+                    }
+                }
+                SaveChangesResultCollection result = service.SaveChanges(Xrm.Sdk.Client.SaveChangesOptions.None);
+                return !result.HasError;
             }
         }
 
