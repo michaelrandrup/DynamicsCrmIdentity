@@ -354,10 +354,12 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm.DAL
                     if (e.Id.Equals(Guid.Empty))
                     {
                         e.Id = Guid.NewGuid();
+                        // service.Attach(e);
                         service.AddObject(e);
                     }
                     else
                     {
+                        service.Attach(e);
                         service.UpdateObject(e);
                     }
                 }

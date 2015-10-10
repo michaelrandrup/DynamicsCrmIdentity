@@ -102,12 +102,37 @@ namespace DefaultMvcWebsite.Controllers
             }
         }
 
-        public ActionResult Profile()
+        [HttpPost]
+        public new ActionResult AccountProfile(FormCollection form)
+        {
+            if (ModelState.IsValid)
+            {
+                var crmUser = UserManager.FindById(User.Identity.GetUserId());
+                UserProfile profile = XrmProfile.GetUserProfile(crmUser.ContactId, "ClickLearn Requirements");
+                profile.Update(form);
+                dynamic model = new XrmProfileModel(profile);
+
+                XrmProfile.UpdateUserProfile(profile);
+            }
+            return RedirectToAction("AccountProfile");
+        }
+        public ActionResult AccountProfile()
         {
              var crmUser = UserManager.FindById(User.Identity.GetUserId());
             Profile definition = XrmProfile.GetProfile("ClickLearn Requirements");
             UserProfile profile = XrmProfile.GetUserProfile(crmUser.ContactId, "ClickLearn Requirements");
-            return View();
+
+            dynamic model = new XrmProfileModel(profile);
+            
+            return View(model);
+        }
+
+        [HttpPost]
+        public new ActionResult Profile(dynamic model)
+        {
+
+
+            throw new NotImplementedException();
         }
 
         //

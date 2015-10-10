@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNet.Identity.DynamicsCrm
@@ -60,6 +62,28 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         }
 
         public Guid Id { get; set; }
+
+        public ProfileField Field(string name)
+        {
+            ProfileField field = Fields.FirstOrDefault(x => GetPropName(x.Name).Equals(GetPropName(name), StringComparison.OrdinalIgnoreCase)); 
+            if (field == null)
+            {
+                field = Fields.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            }
+            if (field != null)
+            {
+                return field;
+            }
+            throw new ArgumentException(string.Format("A field with the name {0} was not found in the profile", name), "name");
+        }
+
+        private string GetPropName(string name)
+        {
+            Regex rgx = new Regex("[^a-zA-Z0-9]");
+            return rgx.Replace(name, "");
+
+        }
+
         public List<ProfileField> Fields = new List<ProfileField>();
 
         internal static Profile Factory(EntityCollection Fields, Guid ProfileId)
@@ -82,6 +106,26 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         {
 
         }
+
+        public void Update(NameValueCollection collection)
+        {
+            foreach (string key in collection.AllKeys)
+            {
+                UserProfileField field = Fields.FirstOrDefault(x => GetPropName(x.Name).Equals(key, StringComparison.OrdinalIgnoreCase));
+                if (field != null)
+                {
+                    field.Value = collection[key];
+                }
+            }
+        }
+
+        private string GetPropName(string name)
+        {
+            Regex rgx = new Regex("[^a-zA-Z0-9 _]");
+            return rgx.Replace(name, "").Replace(" ", "").ToLower();
+        }
+
+
         private Guid _Id;
         public Guid Id
         {

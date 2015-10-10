@@ -1,10 +1,16 @@
-﻿@model Microsoft.AspNet.Identity.DynamicsCrm.UserProfile
+﻿@using System.Web.Mvc
+@using Microsoft.AspNet.Identity.DynamicsCrm
+@model dynamic
 @{
     ViewBag.Title = "Profile";
+    Profile profile = Model.__profile;
+    
 }
 
 <h2>Profile</h2>
 
+@using(Html.BeginForm("AccountProfile","Account",  FormMethod.Post, new {@class = "form"}))
+{
 <div class="container">
     <div class="row">
         <div class="col-lg-12">
@@ -17,6 +23,7 @@
                         </h4>
                     </div>
                     <div id="collapseOne" class="panel-collapse collapse open">
+                        <input type="hidden" id="@Model.referrerid" name="referrer" value="@Request.UrlReferrer" />
                         <div class="panel-body">
                             <div class="form-group col-lg-12">
                                 <div class="alert alert-info alert-dismissable">
@@ -24,43 +31,59 @@
                                     <p>In order for us to provide you with the <strong>best experience for your trial</strong>, you can fill out the following questions, so we may better understand what requirements you have</p>
                                 </div>
                             </div>
+                            
                             <div class="form-group col-lg-12">
                                 <div class="form-group col-lg-6">
                                     <p class="form-label"><strong>Is it required to support your end-users in multiple languages?</strong></p>
                                     <label class="radio-inline">
-                                        @Html.RadioButtonFor(m => m.MultiLanguage, true, new { style = "padding-top: 4px;" }) Yes
+                                        <input type="radio" id="@Model.requiremultilanguagesupportid" name="requiremultilanguagesupport" value="true" style="padding-top: 4px;" @(Model.requiremultilanguagesupport == "true" ? "checked" : "") /> Yes
+                                        @*@Html.RadioButtonFor(m => m.requiremultilanguagesupport, true, new { style = "padding-top: 4px;" }) Yes*@
                                     </label>
                                     <label class="radio-inline">
-                                        @Html.RadioButtonFor(m => m.MultiLanguage, false, new { style = "padding-top: 4px;" }) No
+                                        @*@Html.RadioButtonFor(m => m.requiremultilanguagesupport, false, new { style = "padding-top: 4px;" }) No*@
+                                        <input type="radio" id="@Model.requiremultilanguagesupportid" name="requiremultilanguagesupport" value="false" style="padding-top: 4px;" @(Model.requiremultilanguagesupport == "false" ? "checked" : "") /> No
                                     </label>
                                 </div>
                                 <div class="form-group col-lg-6">
-                                    <label for="UseCases" class="form-label">Please select the use cases that applies to your requirements?</label>
+                                    <label for="usecases" class="form-label">Please select the use cases that applies to your requirements?</label>
                                     <p class="text-muted"><small>(Hold down the CTRL key to select more than one use-case)</small></p>
-                                    @Html.ListBoxFor(m => m.UseCases, Model.ProfileMetaData["usecases"].AsSelectList(Model.UseCases), new { @class = "form-control" })
+                                    <select multiple id="@Model.usecasesid" name="usecases" class="form-control">
+                                        @profile.Field("usecases").AsOptionList((string)Model.usecases)
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group col-lg-6">
-                                <label for="ERPSystem" class="form-label">What is your primary ERP System?</label>
-                                @Html.DropDownListFor(m => m.ERPSystem, Model.ProfileMetaData["erpsystem"].AsSelectList(new string[] { Model.ERPSystem }, "(Not selected)"), new { @class = "form-control" })
+                                <label for="erpsystem" class="form-label">What is your primary ERP System?</label>
+                                <select id="@Model.erpsystemid" name="erpsystem" class="form-control">
+                                    @profile.Field("erpsystem").AsOptionList((string)Model.erpsystem)
+                                </select>
                             </div>
                             <div class="form-group col-lg-6">
                                 <label for="CRMSystem" class="form-label">What is your primary CRM System?</label>
-                                @Html.DropDownListFor(m => m.CRMSystem, Model.ProfileMetaData["crmsystem"].AsSelectList(new string[] { Model.CRMSystem }, "(Not selected)"), new { @class = "form-control" })
+                                <select id="@Model.crmsystem" name="crmsystem" class="form-control">
+                                    @profile.Field("crmsystem").AsOptionList((string)Model.crmsystem)
+                                </select>
                             </div>
                             <div class="form-group col-lg-6">
                                 <label for="Productivity" class="form-label">What kind of productivity or collaboration applications do you use?</label>
                                 <p class="text-muted"><small>(Hold down the CTRL key to select more than one system)</small></p>
-                                @Html.ListBoxFor(m => m.Productivity, Model.ProfileMetaData["productivitycollaborationsystems"].AsSelectList(Model.Productivity), new { @class = "form-control" })
+                                <select id="@Model.productivitycollaborationsystems" name="productivitycollaborationsystems" class="form-control">
+                                    @profile.Field("productivitycollaborationsystems").AsOptionList((string)Model.productivitycollaborationsystems)
+                                </select>
                             </div>
                             <div class="form-group col-lg-6">
                                 <label for="Custom" class="form-label">Do you have any custom-made or other types of business applications?</label>
                                 <p class="text-muted"><small>(Hold down the CTRL key to select more than one application type)</small></p>
-                                @Html.ListBoxFor(m => m.Custom, Model.ProfileMetaData["customapplications"].AsSelectList(Model.Custom), new { @class = "form-control" })
+                                <select id="@Model.customapplications" name="customapplications" class="form-control">
+                                    @profile.Field("customapplications").AsOptionList((string)Model.customapplications)
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="OtherRequirements" class="form-label">Do you have other vital business systems or requirements we need to know about?</label>
-                                @Html.TextAreaFor(m => m.OtherRequirements, new { @class = "form-control", @rows = "4", @placeholder = "You can provide a brief description here" })
+                                <textarea rows="4" name="otherrequirements" class="form-control" id="@Model.otherrequirements" placeholder="You can provide a brief description here">@Model.otherrequirements</textarea>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit">Update</button>
                             </div>
                         </div>
                     </div>
@@ -70,3 +93,4 @@
     </div>
 </div>
 
+}
