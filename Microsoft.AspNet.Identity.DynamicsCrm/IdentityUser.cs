@@ -152,17 +152,18 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
 
         protected static void FillEntity(Entity entity, CrmIdentityUser user)
         {
-            entity["appl_accessfailedcount"] = user.AccessFailedCount;
+            entity["appl_contactid"] = user.Contact;
+            entity["appl_username"] = user.UserName;
+            entity["appl_passwordhash"] = user.PasswordHash;
             entity["appl_email"] = user.Email;
             entity["appl_emailconfirmed"] = user.EmailConfirmed;
-            entity["appl_lockoutenabled"] = user.LockoutEnabled;
-            entity["appl_lockoutenddateutc"] = user.LockoutEndDateUtc.HasValue ? user.LockoutEndDateUtc.Value.ToUniversalTime() : (DateTime?)null;
-            entity["appl_passwordhash"] = user.PasswordHash;
             entity["appl_phonenumber"] = user.PhoneNumber;
             entity["appl_phonenumberconfirmed"] = user.PhoneNumberConfirmed;
             entity["appl_twofactorenabled"] = user.TwoFactorEnabled;
-            entity["appl_username"] = user.UserName;
-            entity["appl_contactid"] = user.Contact;
+            entity["appl_lockoutenabled"] = user.LockoutEnabled;
+            entity["appl_lockoutenddateutc"] = user.LockoutEndDateUtc.HasValue ? user.LockoutEndDateUtc.Value.ToUniversalTime() : (DateTime?)null;
+            entity["appl_accessfailedcount"] = user.AccessFailedCount;
+            entity["appl_securitystamp"] = user.SecurityStamp;
 
 
 
@@ -180,6 +181,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             user.TwoFactorEnabled = entity.GetAttributeValue<bool>("appl_twofactorenabled");
             user.UserName = entity.GetAttributeValue<string>("appl_username");
             user.Contact = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
+            user.SecurityStamp = entity.GetAttributeValue<string>("appl_securitystamp");
         }
 
         
