@@ -81,10 +81,10 @@ namespace DefaultMvcWebsite.Controllers
 
 
 
-            //((ApplicationUserManager)UserManager).CrmStore.HashAllPasswords((pwd) =>
-            //{
-            //    return UserManager.PasswordHasher.HashPassword(pwd);
-            //});
+            ((ApplicationUserManager)UserManager).CrmStore.HashAllPasswords((pwd) =>
+            {
+                return UserManager.PasswordHasher.HashPassword(pwd);
+            });
 
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)

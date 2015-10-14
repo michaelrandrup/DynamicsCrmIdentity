@@ -10,28 +10,33 @@ namespace System.Web.Mvc
 {
     public static class ProfileExtensions
     {
-        public static IEnumerable<SelectListItem> AsSelectList(this ProfileField Field, string SelectedValue, string UndefinedText = "(not selected)")
+        public static IEnumerable<SelectListItem> AsSelectList(this ProfileField Field, string[] SelectedValues, string UndefinedText = "(not selected)")
         {
             List<SelectListItem> items = new List<SelectListItem>();
             if (!string.IsNullOrEmpty(UndefinedText))
             {
-                items.Add(new SelectListItem() { Value = "", Text = UndefinedText, Selected = string.IsNullOrEmpty(SelectedValue) });
+                items.Add(new SelectListItem() { Value = "", Text = UndefinedText, Selected = (SelectedValues == null || SelectedValues.Length == 0) });
             }
-            string[] selected = new string[0];
-            if (!string.IsNullOrEmpty(SelectedValue))
-            {
-                selected = SelectedValue.Split(new string[] {",", ";"}, StringSplitOptions.RemoveEmptyEntries);
-            }
-            foreach (string value in Field.Options.Split(new string[] {"\r","\n"}, StringSplitOptions.RemoveEmptyEntries))
+            foreach (string value in Field.Options.Split(new string[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 items.Add(new SelectListItem()
                 {
                     Text = value,
                     Value = value,
-                    Selected = selected.Contains(value)
+                    Selected = SelectedValues.Contains(value)
                 });
             }
             return items;
+        }
+        
+        public static IEnumerable<SelectListItem> AsSelectList(this ProfileField Field, string SelectedValue, string UndefinedText = "(not selected)")
+        {
+            string[] selected = new string[0];
+            if (!string.IsNullOrEmpty(SelectedValue))
+            {
+                selected = SelectedValue.Split(new string[] { ",", ";" }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            return AsSelectList(Field, selected, UndefinedText);
         }
 
         public static MvcHtmlString AsOptionList(this ProfileField Field, string SelectedValue, string UndefinedText = "(not selected)")
