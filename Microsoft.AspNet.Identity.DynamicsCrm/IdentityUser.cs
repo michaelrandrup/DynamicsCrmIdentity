@@ -182,6 +182,14 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             user.UserName = entity.GetAttributeValue<string>("appl_username");
             user.Contact = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
             user.SecurityStamp = entity.GetAttributeValue<string>("appl_securitystamp");
+            if (string.IsNullOrEmpty(user.SecurityStamp))
+            {
+                // Always ensure the security stamp is present. If not, create a new one and save it to the backend.
+                user.SecurityStamp = Guid.NewGuid().ToString();
+                entity["appl_securitystame"] = user.SecurityStamp;
+                DAL.XrmCore.UpdateEntity(entity);
+
+            }
         }
 
         
