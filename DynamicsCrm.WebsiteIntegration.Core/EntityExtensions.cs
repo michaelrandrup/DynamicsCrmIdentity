@@ -7,12 +7,89 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Crm.Sdk.Messages;
 
 namespace DynamicsCrm.WebsiteIntegration.Core
 {
     public static class EntityExtensions
     {
-        public static void SetAttributeMetaValue(this Entity entity, KeyValuePair<string, string> kv, EntityMetadata metadata = null)
+        public static void ApplyAction(this Entity entity, KeyValuePair<string, string> action)
+        {
+            string[] actionArgs = action.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            switch (action.Key.ToUpper())
+            {
+                case "APPLYWORKFLOW":
+                    InputArgumentCollection workflowArgs = null;
+                    if (actionArgs.Length > 1)
+                    {
+                        workflowArgs = new InputArgumentCollection();
+                        for (int i = 1; i < actionArgs.Length; i++)
+                        {
+                            string[] workflowArg = actionArgs[i].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+                            workflowArgs.Add(workflowArg[0], workflowArg[1]);
+                        }
+                    }
+                    Guid g;
+                    if (Guid.TryParse(actionArgs[0], out g))
+                    {
+                        XrmCore.ApplyWorkFlow(entity, g, workflowArgs);
+                    }
+                    else
+                    {
+                        XrmCore.ApplyWorkFlow(entity, actionArgs[0], workflowArgs);
+                    }
+                    break;
+
+                case "ADDTOMARKETINGLIST":
+                case "REMOVEFROMMARKETINGLIST":
+                    bool remove = action.Key.Equals("REMOVEFROMMARKETINGLIST", StringComparison.OrdinalIgnoreCase);
+                    for (int i = 0; i < actionArgs.Length; i++)
+                    {
+                        Entity list = XrmCore.RetrieveByAttribute("list", "listname", actionArgs[i], new ColumnSet("listid")).Entities.FirstOrDefault();
+                        if (list == null)
+                        {
+                            throw new ArgumentException(string.Format("The Marketing list {0} could not be found", actionArgs[0]));
+                        }
+                        else
+                        {
+                            if (remove)
+                            {
+                                XrmMarketing.RemoveFromMarketingList(entity.Id, list.Id);
+                            }
+                            else
+                            {
+                                XrmMarketing.AddToMarketingList(new Guid[] { entity.Id }, list.Id);
+                            }
+                        }
+                    }
+                    break;
+
+                case "ASSIGN":
+                    FilterExpression filter = new FilterExpression(LogicalOperator.Or);
+                    filter.AddCondition("fullname", ConditionOperator.Like, new object[] { actionArgs[0] });
+                    filter.AddCondition("emailaddress1", ConditionOperator.Like, new object[] { actionArgs[0] });
+                    Entity owner = XrmCore.RetrieveByFilter("systemuser", filter, new ColumnSet("systemuserid")).Entities.FirstOrDefault();
+                    if (owner == null)
+                    {
+                        throw new ArgumentException(string.Format("The System user with the name or email {0} could not be found", actionArgs[0]));
+                    }
+                    else
+                    {
+                        AssignRequest request = new AssignRequest()
+                        {
+                            Assignee = owner.ToEntityReference(),
+                            Target = entity.ToEntityReference()
+                        };
+                        XrmCore.Execute<AssignRequest, AssignResponse>(request); 
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+        public static void SetAttributeMetaValue(this Entity entity, KeyValuePair<string, string> kv, IDictionary<string, string> settings, EntityMetadata metadata = null)
         {
             if (metadata == null)
             {
@@ -21,9 +98,19 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             }
 
             AttributeMetadata att = metadata.Attributes.FirstOrDefault(x => x.LogicalName.Equals(kv.Key, StringComparison.OrdinalIgnoreCase));
+            string setting = "";
             if (att == null)
             {
-                throw new InvalidOperationException(string.Format("Unknown attibute for {2}: '{0} with the value of {1}", kv.Key, kv.Value, entity.LogicalName));
+                // check special field rules
+                setting = settings.GetValueOrDefault<string>(kv.Key + "_propertyalias", "");
+                if (setting != null)
+                {
+                    att = metadata.Attributes.FirstOrDefault(x => x.LogicalName.Equals(setting, StringComparison.OrdinalIgnoreCase));
+                }
+                if (att == null)
+                {
+                    throw new InvalidOperationException(string.Format("Unknown attibute for {2}: '{0} with the value of {1}", kv.Key, kv.Value, entity.LogicalName));
+                }
             }
             else if (!att.AttributeType.HasValue)
             {
@@ -36,7 +123,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 case AttributeTypeCode.Boolean:
                     entity.SetAttributeValue(kv.Key, Convert.ToBoolean(kv.Value));
                     break;
-                
+
                 case AttributeTypeCode.DateTime:
                     DateTime dt;
                     if (DateTime.TryParse(kv.Value, out dt))
@@ -134,7 +221,15 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 
                 case AttributeTypeCode.Memo:
                 case AttributeTypeCode.String:
-                    entity.SetAttributeValue(kv.Key, kv.Value);
+                    setting = settings.GetValueOrDefault<string>(kv.Key + "_appendformat", "");
+                    if (!string.IsNullOrEmpty(setting))
+                    {
+                        entity.SetAttributeValue(att.LogicalName, (entity.GetAttributeValue<string>(att.LogicalName) ?? "") + string.Format(setting, kv.Value));
+                    }
+                    else
+                    {
+                        entity.SetAttributeValue(att.LogicalName, kv.Value);
+                    }
                     break;
 
                 case AttributeTypeCode.Owner:
@@ -205,7 +300,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.EntityName:
                     throw new NotImplementedException(string.Format("The attribute type {0} is not supported", att.AttributeType.Value.ToString()));
-                
+
                 default:
                     break;
             }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
+using DynamicsCrm.WebsiteIntegration.Core;
 
 namespace DefaultMvcWebsite.Controllers
 {
@@ -34,8 +36,10 @@ namespace DefaultMvcWebsite.Controllers
         }
 
         [HttpPost]
-        public ActionResult Form([Bind(Prefix = "profile")] Dictionary<string,string> profiles, [Bind(Prefix = "property")] Dictionary<string,string> model, [Bind(Prefix ="setting")] Dictionary<string, string> settings)
+        public ActionResult Form([Bind(Prefix = "profile")] Dictionary<string,object> profiles, [Bind(Prefix = "property")] Dictionary<string,object> model, [Bind(Prefix ="setting")] Dictionary<string, string> settings)
         {
+            settings.ResolveArrays();
+            
             return View(model);
         }
     }

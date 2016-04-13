@@ -50,9 +50,10 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             EntityMetadata meta = XrmCore.RetrieveMetadata("lead", EntityFilters.All, connection);
             foreach (KeyValuePair<string, string> kv in properties)
             {
-                AttributeMetadata att = meta.Attributes.FirstOrDefault(x => x.LogicalName.Equals(kv.Key, StringComparison.OrdinalIgnoreCase));
+                lead.SetAttributeMetaValue(kv,settings, meta);
             }
-
+            Guid Id = XrmCore.CreateEntity(lead);
+            
             return Guid.Empty;
 
         }
