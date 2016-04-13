@@ -10,7 +10,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using DefaultMvcWebsite.Models;
 using Microsoft.AspNet.Identity.DynamicsCrm;
-using Microsoft.AspNet.Identity.DynamicsCrm.DAL;
+using DynamicsCrm.WebsiteIntegration.Core;
 
 namespace DefaultMvcWebsite.Controllers
 {
@@ -81,10 +81,10 @@ namespace DefaultMvcWebsite.Controllers
 
 
 
-            ((ApplicationUserManager)UserManager).CrmStore.HashAllPasswords((pwd) =>
-            {
-                return UserManager.PasswordHasher.HashPassword(pwd);
-            });
+            //((ApplicationUserManager)UserManager).CrmStore.HashAllPasswords((pwd) =>
+            //{
+            //    return UserManager.PasswordHasher.HashPassword(pwd);
+            //});
 
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
@@ -195,7 +195,7 @@ namespace DefaultMvcWebsite.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new CrmIdentityUser { UserName = model.Email, Email = model.Email };
+                var user = new CrmIdentityUser<string> { UserName = model.Email, Email = model.Email };
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
@@ -411,7 +411,7 @@ namespace DefaultMvcWebsite.Controllers
                 {
                     return View("ExternalLoginFailure");
                 }
-                var user = new CrmIdentityUser { UserName = model.Email, Email = model.Email };
+                var user = new CrmIdentityUser<string> { UserName = model.Email, Email = model.Email };
                 var result = await UserManager.CreateAsync(user);
                 if (result.Succeeded)
                 {

@@ -1,0 +1,31 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.AspNet.Identity.DynamicsCrm</id>
+    <version>1.0.0</version>
+    <title>TinyHttp</title>
+    <authors>Michael Randrup</authors>
+    <owners>michaelrandrup</owners>
+    <licenseUrl>http://github.com/appldev/TinyHttp/blob/master/LICENSE</licenseUrl>
+    <projectUrl>http://appldev.github.io/TinyHttp</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Light-weight http client for making CRUD and REST calls via http in .NET</description>
+    <releaseNotes>
+      Visit GitHub for usage examples
+    </releaseNotes>
+    <language>en-US</language>
+    <tags>Http REST CRUD C#</tags>
+    <dependencies>
+        <dependency id="Newtonsoft.Json" version="8.0.2" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Net.Http" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Runtime.Serialization" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Web" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Xml" targetFramework="net452" />
+      <frameworkAssembly assemblyName="System.Xml.Linq" targetFramework="net452" />
+    </frameworkAssemblies>
+  </metadata>
+</package>

@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Microsoft.AspNet.Identity.DynamicsCrm
+namespace DynamicsCrm.WebsiteIntegration.Core
 {
     public enum ProfileFieldDataTypes : int
     {

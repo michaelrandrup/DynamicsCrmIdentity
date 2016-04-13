@@ -17,7 +17,7 @@ namespace DefaultMvcWebsite
         {
             // If you are going to add your own custom claims when a new ClaimsIdentity is generated
             // setup this static delegate below
-            CrmIdentityUser.AddCustomClaimsToIdentity = new CrmIdentityUser.AddCustomClaimsToIdentityDelegate(ApplicationUserManager.AddCustomUserClaims);
+            CrmIdentityUser<string>.AddCustomClaimsToIdentity = new CrmIdentityUser<string>.AddCustomClaimsToIdentityDelegate<string>(ApplicationUserManager.AddCustomUserClaims);
 
 
             
@@ -35,7 +35,7 @@ namespace DefaultMvcWebsite
                 {
                     // Enables the application to validate the security stamp when the user logs in.
                     // This is a security feature which is used when you change a password or add an external login to your account.  
-                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<ApplicationUserManager, CrmIdentityUser>(
+                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<ApplicationUserManager, CrmIdentityUser<string>>(
                         validateInterval: TimeSpan.FromMinutes(30),
                         regenerateIdentity: (manager, user) => user.GenerateUserIdentityAsync(manager))
                 }

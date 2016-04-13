@@ -34,19 +34,19 @@ namespace DefaultMvcWebsite
     }
 
      
-    public class ApplicationUserManager : UserManager<CrmIdentityUser>
+    public class ApplicationUserManager : UserManager<CrmIdentityUser<string>, string>
     {
-        public ApplicationUserManager(IUserStore<CrmIdentityUser> store)
+        public ApplicationUserManager(IUserStore<CrmIdentityUser<string>,string> store)
             : base(store)
         {
             
         }
 
-        public Microsoft.AspNet.Identity.DynamicsCrm.UserStore CrmStore
+        public IUserStore<CrmIdentityUser<string>, string> CrmStore
         {
             get
             {
-                return (Microsoft.AspNet.Identity.DynamicsCrm.UserStore)this.Store;
+                return this.Store;
             }
         }
 
@@ -55,7 +55,7 @@ namespace DefaultMvcWebsite
         /// </summary>
         /// <param name="userIdentity">the ClaimsIdentity created from CRM</param>
         /// <param name="manager">the user manager used to add claims in the CRM storage</param>
-        public static async Task AddCustomUserClaims(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser> manager)
+        public static async Task AddCustomUserClaims(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser<string>,string> manager)
         {
             // Here you can add your custom claims to the userIdentity
             // Below is an example of how to add a custom claim:
@@ -85,10 +85,10 @@ namespace DefaultMvcWebsite
         {
             
             
-            var manager = new ApplicationUserManager(new Microsoft.AspNet.Identity.DynamicsCrm.UserStore());
+            var manager = new ApplicationUserManager((new UserStore<CrmIdentityUser<string>,string>() as IUserStore<CrmIdentityUser<string>, string>));
             
             // Configure validation logic for usernames
-            manager.UserValidator = new UserValidator<CrmIdentityUser>(manager)
+            manager.UserValidator = new UserValidator<CrmIdentityUser<string>,string>(manager)
             {
                 AllowOnlyAlphanumericUserNames = false,
                 RequireUniqueEmail = true
@@ -111,11 +111,11 @@ namespace DefaultMvcWebsite
 
             // Register two factor authentication providers. This application uses Phone and Emails as a step of receiving a code for verifying the user
             // You can write your own provider and plug it in here.
-            manager.RegisterTwoFactorProvider("Phone Code", new PhoneNumberTokenProvider<CrmIdentityUser>
+            manager.RegisterTwoFactorProvider("Phone Code", new PhoneNumberTokenProvider<CrmIdentityUser<string>>
             {
                 MessageFormat = "Your security code is {0}"
             });
-            manager.RegisterTwoFactorProvider("Email Code", new EmailTokenProvider<CrmIdentityUser>
+            manager.RegisterTwoFactorProvider("Email Code", new EmailTokenProvider<CrmIdentityUser<string>>
             {
                 Subject = "Security Code",
                 BodyFormat = "Your security code is {0}"
@@ -126,23 +126,23 @@ namespace DefaultMvcWebsite
             if (dataProtectionProvider != null)
             {
                 manager.UserTokenProvider =
-                    new DataProtectorTokenProvider<CrmIdentityUser>(dataProtectionProvider.Create("ASP.NET Identity"));
+                    new DataProtectorTokenProvider<CrmIdentityUser<string>>(dataProtectionProvider.Create("ASP.NET Identity"));
             }
             return manager;
         }
     }
 
      
-    public class ApplicationSignInManager : SignInManager<CrmIdentityUser, string>
+    public class ApplicationSignInManager : SignInManager<CrmIdentityUser<string>, string>
     {
         public ApplicationSignInManager(ApplicationUserManager userManager, IAuthenticationManager authenticationManager)
             : base(userManager, authenticationManager)
         {
         }
 
-        public override Task<ClaimsIdentity> CreateUserIdentityAsync(CrmIdentityUser user)
+        public override Task<ClaimsIdentity> CreateUserIdentityAsync(CrmIdentityUser<string> user)
         {
-            return user.GenerateUserIdentityAsync((ApplicationUserManager)UserManager);
+            return user.GenerateUserIdentityAsync<string>(UserManager);
         }
 
         public static ApplicationSignInManager Create(IdentityFactoryOptions<ApplicationSignInManager> options, IOwinContext context)

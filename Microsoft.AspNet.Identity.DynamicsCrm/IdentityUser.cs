@@ -5,19 +5,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DynamicsCrm.WebsiteIntegration.Core;
+using System.Security.Claims;
 
 namespace Microsoft.AspNet.Identity.DynamicsCrm
 {
-    
 
-    public class CrmIdentityUser : IUser<string>, IUser
+
+    public class CrmIdentityUser<T> : ICrmIdentityUser<T> where T : IEquatable<T>
     {
         /// <summary>
         /// Default constructor 
         /// </summary>
         public CrmIdentityUser()
         {
-            Id = Guid.NewGuid().ToString();
+            Key = Guid.NewGuid();
             SecurityStamp = Guid.NewGuid().ToString();
         }
         /// <summary>
@@ -30,7 +32,18 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             UserName = userName;
         }
 
-
+        private T _Id = default(T);
+        public T Id
+        {
+            get
+            {
+                if (typeof(T) == typeof(string))
+                {
+                    return (T)Convert.ChangeType(this.Key.ToString(), typeof(T));
+                }
+                return _Id;
+            }
+        }
 
         #region Crm Properties
         private string _EntityName = "appl_webuser";
@@ -44,15 +57,12 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         #endregion
 
 
-        
+
+
 
         
 
-        /// <summary>
-        /// User ID
-        /// </summary>
-        public string Id { get; set; }
-
+        public Guid Key { get; set; }
         /// <summary>
         /// User's name
         /// </summary>
@@ -125,32 +135,32 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             }
         }
 
-        internal static Entity ConvertToEntity(CrmIdentityUser user)
+        public static Entity ConvertToEntity<TKey>(ICrmIdentityUser<T> user) where TKey : IEquatable<TKey>
         {
-            Entity e = new Entity(user.EntityName, new Guid(user.Id));
+            Entity e = new Entity(user.EntityName, user.Key);
             FillEntity(e, user);
             return e;
         }
 
-        internal static CrmIdentityUser ConvertToIdentityUser(Entity entity)
+        public static ICrmIdentityUser<T> ConvertToIdentityUser<TKey>(Entity entity, Action<ICrmIdentityUser<T>, Entity> PopulateUser = null) where TKey : IEquatable<TKey>
         {
-            CrmIdentityUser user = new CrmIdentityUser() { EntityName = entity.LogicalName, Id = entity.Id.ToString() };
-            FillIdentityUser(user, entity);
-            return user;
+            ICrmIdentityUser<T> user = new CrmIdentityUser<T>() { EntityName = entity.LogicalName, Key = entity.Id };
+            FillIdentityUser<T>((ICrmIdentityUser<T>)user, entity, PopulateUser);
+            return (ICrmIdentityUser<T>)user;
 
         }
 
         public virtual Entity AsEntity()
         {
-            return ConvertToEntity(this);
+            return ConvertToEntity<T>(this);
         }
 
         public virtual EntityReference AsEntityReference()
         {
-            return new EntityReference("appl_webuser", new Guid(this.Id));
+            return new EntityReference("appl_webuser", this.Key);
         }
 
-        protected static void FillEntity(Entity entity, CrmIdentityUser user)
+        protected static void FillEntity<TKey>(Entity entity, ICrmIdentityUser<TKey> user) where TKey : IEquatable<TKey>
         {
             entity["appl_contactid"] = user.Contact;
             entity["appl_username"] = user.UserName;
@@ -165,10 +175,8 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             entity["appl_accessfailedcount"] = user.AccessFailedCount;
             entity["appl_securitystamp"] = user.SecurityStamp;
 
-
-
         }
-        protected static void FillIdentityUser(CrmIdentityUser user, Entity entity)
+        protected static void FillIdentityUser<TKey>(ICrmIdentityUser<TKey> user, Entity entity, Action<ICrmIdentityUser<TKey>, Entity> PopulateUser = null) where TKey : IEquatable<TKey>
         {
             user.AccessFailedCount = entity.GetAttributeValue<int>("appl_accessfailedcount");
             user.Email = entity.GetAttributeValue<string>("appl_email");
@@ -182,108 +190,48 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
             user.UserName = entity.GetAttributeValue<string>("appl_username");
             user.Contact = entity.Contains("appl_contactid") ? entity.GetAttributeValue<EntityReference>("appl_contactid") : null;
             user.SecurityStamp = entity.GetAttributeValue<string>("appl_securitystamp");
+            
+
             if (string.IsNullOrEmpty(user.SecurityStamp))
             {
                 // Always ensure the security stamp is present. If not, create a new one and save it to the backend.
                 user.SecurityStamp = Guid.NewGuid().ToString();
-                entity["appl_securitystame"] = user.SecurityStamp;
-                DAL.XrmCore.UpdateEntity(entity);
-
+                entity["appl_securitystamp"] = user.SecurityStamp;
+                XrmCore.UpdateEntity(entity);
+            }
+            if (PopulateUser != null)
+            {
+                PopulateUser(user, entity);
             }
         }
 
-        
-        
-        public delegate Task AddCustomClaimsToIdentityDelegate(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser> manager);
-        public static AddCustomClaimsToIdentityDelegate AddCustomClaimsToIdentity = null;
-        
 
-        public virtual async Task<System.Security.Claims.ClaimsIdentity> GenerateUserIdentityAsync(UserManager<CrmIdentityUser> manager)
+
+        public delegate Task AddCustomClaimsToIdentityDelegate<T1>(System.Security.Claims.ClaimsIdentity userIdentity, UserManager<CrmIdentityUser<T1>, T1> manager) where T1 : IEquatable<T1>;
+        public static AddCustomClaimsToIdentityDelegate<T> AddCustomClaimsToIdentity;
+
+
+        Entity ICrmIdentityUser<T>.AsEntity()
         {
-            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
-            var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
+            throw new NotImplementedException();
+        }
+
+        EntityReference ICrmIdentityUser<T>.AsEntityReference()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<System.Security.Claims.ClaimsIdentity> GenerateUserIdentityAsync<T1>(UserManager<CrmIdentityUser<T1>, T1> manager) where T1 : IEquatable<T1>
+        {
+            var userIdentity = await manager.CreateIdentityAsync((this as CrmIdentityUser<T1>), DefaultAuthenticationTypes.ApplicationCookie);
             if (AddCustomClaimsToIdentity != null)
             {
-                await AddCustomClaimsToIdentity(userIdentity, manager);
+                await AddCustomClaimsToIdentity(userIdentity, (manager as UserManager<CrmIdentityUser<T>, T>));
             }
-            
+
             return userIdentity;
         }
 
 
-        string IUser<string>.Id
-        {
-            get { return this.Id.ToString(); }
-        }
     }
-
-
-
-    //public class IdentityUserLogin
-    //{
-    //    public IdentityUserLogin();
-
-    //    // Summary:
-    //    //     The login provider for the login (i.e. facebook, google)
-    //    public virtual string LoginProvider { get; set; }
-    //    //
-    //    // Summary:
-    //    //     Key representing the login for the provider
-    //    public virtual string ProviderKey { get; set; }
-    //    //
-    //    // Summary:
-    //    //     User Id for the user who owns this login
-    //    public virtual string UserId { get; set; }
-    //}
-
-    //// Summary:
-    ////     EntityType that represents a user belonging to a role
-    ////
-    //// Type parameters:
-    ////   TKey:
-    //public class IdentityUserRole<TKey>
-    //{
-    //    public IdentityUserRole();
-
-    //    // Summary:
-    //    //     RoleId for the role
-    //    public virtual TKey RoleId { get; set; }
-    //    //
-    //    // Summary:
-    //    //     UserId for the user that is in the role
-    //    public virtual TKey UserId { get; set; }
-    //}
-
-
-    //// Summary:
-    ////     EntityType that represents one specific user claim
-    ////
-    //// Type parameters:
-    ////   TKey:
-    //public class IdentityUserClaim<TKey>
-    //{
-    //    public IdentityUserClaim()
-    //    {
-
-    //    }
-
-    //    // Summary:
-    //    //     Claim type
-    //    public virtual string ClaimType { get; set; }
-    //    //
-    //    // Summary:
-    //    //     Claim value
-    //    public virtual string ClaimValue { get; set; }
-    //    //
-    //    // Summary:
-    //    //     Primary key
-    //    public virtual int Id { get; set; }
-    //    //
-    //    // Summary:
-    //    //     User Id for the user who owns this login
-    //    public virtual TKey UserId { get; set; }
-    //}
-
-
-
 }

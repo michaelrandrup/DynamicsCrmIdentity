@@ -5,6 +5,7 @@ using System.Web;
 using Microsoft.AspNet.Identity.DynamicsCrm;
 using System.Web.Mvc;
 using System.Text;
+using DynamicsCrm.WebsiteIntegration.Core;
 
 namespace System.Web.Mvc
 {
