@@ -47,7 +47,7 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
                 }
                 else if (typeof(S) == typeof(int))
                 {
-                    EntityCollection col = XrmCore.RetrieveByAttribute("appl_webuser", "appl_userid", Convert.ToString(userId), null, false);
+                    EntityCollection col = XrmCore.RetrieveByAttribute("appl_webuser", "appl_userid", Convert.ToString(userId), CacheResults: false);
                     e = col.Entities.FirstOrDefault();
                 }
                 
@@ -238,7 +238,6 @@ namespace Microsoft.AspNet.Identity.DynamicsCrm
         }
 
         #endregion
-
 
         #region IUserLockoutStore
 

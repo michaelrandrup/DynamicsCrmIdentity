@@ -27,5 +27,16 @@ namespace DefaultMvcWebsite.Controllers
 
             return View();
         }
+
+        public ActionResult Form()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Form([Bind(Prefix = "profile")] Dictionary<string,string> profiles, [Bind(Prefix = "property")] Dictionary<string,string> model, [Bind(Prefix ="setting")] Dictionary<string, string> settings)
+        {
+            return View(model);
+        }
     }
 }

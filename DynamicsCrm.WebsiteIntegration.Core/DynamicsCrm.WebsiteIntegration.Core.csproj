@@ -80,10 +80,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataAccessLayer.cs" />
+    <Compile Include="XrmCore.cs" />
+    <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="EntityExtensions.cs" />
     <Compile Include="NameValueCollecion.cs" />
     <Compile Include="ProfileDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XrmConnection.cs" />
+    <Compile Include="XrmLead.cs" />
+    <Compile Include="XrmMarketing.cs" />
+    <Compile Include="XrmProfile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

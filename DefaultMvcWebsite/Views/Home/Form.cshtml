@@ -1,0 +1,19 @@
+﻿
+@{
+    ViewBag.Title = "Form";
+}
+
+<h2>Form</h2>
+
+@using(Html.BeginForm())
+{
+    <label for="property.fullname">Full name: </label><input id="fullname" name="property.fullname" type="text" />
+    <label for="profile.Age">Age: </label><input id="profile.Age" name="profile.Age" type="number" />
+    <label for="profile.Preference">Preference: </label><input id="profile.Preference" name="profile.Preference" type="text" />
+    <label for="setting.matchlead">Match lead: </label><input name="setting.matchlead" type="checkbox" value="true" /><input name="setting.matchlead" type="hidden" value="false" />
+    <input name="setting.profilename" type="hidden" value="ThisIsAProfile" />
+    
+    <button type="submit">Submit</button>
+
+}
+
