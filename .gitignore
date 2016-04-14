@@ -1,0 +1,11 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/DynamicsCrm.WebsiteIntegration.Core/obj/Debug
+/DynamicsCrm.WebsiteIntegration.Core/bin/Debug
+/Microsoft.AspNet.Identity.DynamicsCrm/bin/Debug
+/DefaultMvcWebsite/obj/Debug
+/Microsoft.AspNet.Identity.DynamicsCrm/obj/Debug
+/DefaultMvcWebsite/bin
+/packages

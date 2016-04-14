@@ -10,7 +10,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 {
     public static class XrmLead
     {
-        public static Guid CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, CrmConnection connection = null)
+        public static Guid CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
         {
             bool match = Convert.ToBoolean(settings.GetValueOrDefault<string>("match", bool.FalseString));
             Entity lead = new Entity("lead", Guid.NewGuid());
@@ -47,6 +47,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 }
             }
 
+            // Apply properties
             EntityMetadata meta = XrmCore.RetrieveMetadata("lead", EntityFilters.All, connection);
             foreach (KeyValuePair<string, string> kv in properties)
             {
@@ -54,7 +55,13 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             }
             Guid Id = XrmCore.CreateEntity(lead);
             
-            return Guid.Empty;
+            // Apply actions
+            foreach (KeyValuePair<string, string> kv in actions)
+            {
+                lead.ApplyAction(kv);
+            }
+
+            return lead.Id;
 
         }
 
