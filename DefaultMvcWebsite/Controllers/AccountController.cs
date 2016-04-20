@@ -85,7 +85,7 @@ namespace DefaultMvcWebsite.Controllers
             //{
             //    return UserManager.PasswordHasher.HashPassword(pwd);
             //});
-
+            
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {

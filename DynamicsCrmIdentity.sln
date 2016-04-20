@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D390FF13-123C-41DC-98A0-F23CEB6DC631}"
 EndProject
@@ -10,6 +10,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultMvcWebsite", "DefaultMvcWebsite\DefaultMvcWebsite.csproj", "{215BB790-5F6B-47E8-B28D-94B98B713361}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicsCrm.WebsiteIntegration.Core", "DynamicsCrm.WebsiteIntegration.Core\DynamicsCrm.WebsiteIntegration.Core.csproj", "{5B4D27D2-F2BF-4AB7-8B4E-5EED126FFEB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions", "Solutions", "{D49D5334-5118-4451-AAEC-FB480AB7EE96}"
+	ProjectSection(SolutionItems) = preProject
+		Solutions\Websiteintegration_0_3_0.zip = Solutions\Websiteintegration_0_3_0.zip
+		Solutions\Websiteintegration_0_3_0_managed.zip = Solutions\Websiteintegration_0_3_0_managed.zip
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

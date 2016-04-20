@@ -1,22 +1,26 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Microsoft.AspNet.Identity.DynamicsCrm</id>
+    <id>DynamicsCrmIdentity</id>
     <version>1.0.0</version>
-    <title>TinyHttp</title>
+    <title>Microsoft Identity provider for Dynamics CRM</title>
     <authors>Michael Randrup</authors>
     <owners>michaelrandrup</owners>
-    <licenseUrl>http://github.com/appldev/TinyHttp/blob/master/LICENSE</licenseUrl>
-    <projectUrl>http://appldev.github.io/TinyHttp</projectUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Light-weight http client for making CRUD and REST calls via http in .NET</description>
+    <licenseUrl>https://github.com/michaelrandrup/DynamicsCrmIdentity/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/michaelrandrup/DynamicsCrmIdentity</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>Use Microsoft Dynamics CRM as backend-store and management for your Microsoft Identity Claims-based websites</description>
     <releaseNotes>
       Visit GitHub for usage examples
     </releaseNotes>
     <language>en-US</language>
-    <tags>Http REST CRUD C#</tags>
+    <tags>Microsoft Identity CRM Dynamics</tags>
     <dependencies>
-        <dependency id="Newtonsoft.Json" version="8.0.2" />
+      <dependency id="Microsoft.AspNet.Identity.Core" version="2.2.1" />
+      <dependency id="Microsoft.CrmSdk.CoreAssemblies" version="8.0.2.1" />
+      <dependency id="Microsoft.CrmSdk.Deployment" version="8.0.2.1" />
+      <dependency id="Microsoft.CrmSdk.Extensions" version="7.1.0.1"  />
+      <dependency id="Microsoft.IdentityModel" version="6.1.7600.16394" />
     </dependencies>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System.Core" targetFramework="net452" />
