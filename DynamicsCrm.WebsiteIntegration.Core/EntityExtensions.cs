@@ -66,8 +66,8 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 
                 case "ASSIGN":
                     FilterExpression filter = new FilterExpression(LogicalOperator.Or);
-                    filter.AddCondition("fullname", ConditionOperator.Like, new object[] { actionArgs[0] });
-                    filter.AddCondition("emailaddress1", ConditionOperator.Like, new object[] { actionArgs[0] });
+                    filter.AddCondition("fullname", ConditionOperator.Like, actionArgs[0] );
+                    filter.AddCondition("internalemailaddress", ConditionOperator.Like, actionArgs[0]);
                     Entity owner = XrmCore.RetrieveByFilter("systemuser", filter, new ColumnSet("systemuserid")).Entities.FirstOrDefault();
                     if (owner == null)
                     {
@@ -80,7 +80,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                             Assignee = owner.ToEntityReference(),
                             Target = entity.ToEntityReference()
                         };
-                        XrmCore.Execute<AssignRequest, AssignResponse>(request); 
+                        XrmCore.Execute<AssignRequest, AssignResponse>(request);
                     }
                     break;
 
@@ -96,39 +96,30 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 entity[kv.Key] = kv.Value;
                 return;
             }
-
-            AttributeMetadata att = metadata.Attributes.FirstOrDefault(x => x.LogicalName.Equals(kv.Key, StringComparison.OrdinalIgnoreCase));
-            string setting = "";
+            string setting = null;
+            string alias = settings.GetValueOrDefault<string>(kv.Key + "_propertyalias", kv.Key);
+            AttributeMetadata att = metadata.Attributes.FirstOrDefault(x => x.LogicalName.Equals(alias, StringComparison.OrdinalIgnoreCase));
             if (att == null)
             {
-                // check special field rules
-                setting = settings.GetValueOrDefault<string>(kv.Key + "_propertyalias", "");
-                if (setting != null)
-                {
-                    att = metadata.Attributes.FirstOrDefault(x => x.LogicalName.Equals(setting, StringComparison.OrdinalIgnoreCase));
-                }
-                if (att == null)
-                {
-                    throw new InvalidOperationException(string.Format("Unknown attibute for {2}: '{0} with the value of {1}", kv.Key, kv.Value, entity.LogicalName));
-                }
+                throw new InvalidOperationException(string.Format("Unknown attibute for {2}: '{0} with the value of {1}", kv.Key, kv.Value, entity.LogicalName));
             }
             else if (!att.AttributeType.HasValue)
             {
-                entity[kv.Key] = kv.Value;
+                entity[att.LogicalName] = kv.Value;
                 return;
             }
 
             switch (att.AttributeType.Value)
             {
                 case AttributeTypeCode.Boolean:
-                    entity.SetAttributeValue(kv.Key, Convert.ToBoolean(kv.Value));
+                    entity.SetAttributeValue(att.LogicalName, Convert.ToBoolean(kv.Value));
                     break;
 
                 case AttributeTypeCode.DateTime:
                     DateTime dt;
                     if (DateTime.TryParse(kv.Value, out dt))
                     {
-                        entity.SetAttributeValue(kv.Key, dt);
+                        entity.SetAttributeValue(att.LogicalName, dt);
                     }
                     else
                     {
@@ -143,11 +134,11 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     {
                         if (att.AttributeType.Value == AttributeTypeCode.Money)
                         {
-                            entity.SetAttributeValue(kv.Key, new Money(dec));
+                            entity.SetAttributeValue(att.LogicalName, new Money(dec));
                         }
                         else
                         {
-                            entity.SetAttributeValue(kv.Key, dec);
+                            entity.SetAttributeValue(att.LogicalName, dec);
                         }
                     }
                     else
@@ -160,7 +151,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     double dou;
                     if (double.TryParse(kv.Value, out dou))
                     {
-                        entity.SetAttributeValue(kv.Key, dou);
+                        entity.SetAttributeValue(att.LogicalName, dou);
                     }
                     else
                     {
@@ -172,7 +163,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     int i;
                     if (int.TryParse(kv.Value, out i))
                     {
-                        entity.SetAttributeValue(kv.Key, i);
+                        entity.SetAttributeValue(att.LogicalName, i);
                     }
                     else
                     {
@@ -184,7 +175,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     long l;
                     if (long.TryParse(kv.Value, out l))
                     {
-                        entity.SetAttributeValue(kv.Key, l);
+                        entity.SetAttributeValue(att.LogicalName, l);
                     }
                     else
                     {
@@ -201,14 +192,14 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     }
                     Entity lookup = null;
                     Guid gLookup;
-                    EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencingEntity, EntityFilters.Entity);
+                    EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencedEntity, EntityFilters.Entity);
                     if (Guid.TryParse(kv.Value, out gLookup))
                     {
-                        lookup = XrmCore.Retrieve(mto1.ReferencingEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
+                        lookup = XrmCore.Retrieve(mto1.ReferencedEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
                     }
                     else
                     {
-                        lookup = XrmCore.RetrieveByAttribute(mto1.ReferencingEntity, mto1Meta.PrimaryNameAttribute, kv.Value, new ColumnSet(mto1Meta.PrimaryIdAttribute)).Entities.FirstOrDefault();
+                        lookup = XrmCore.RetrieveByAttribute(mto1.ReferencedEntity, mto1Meta.PrimaryNameAttribute, kv.Value, new ColumnSet(mto1Meta.PrimaryIdAttribute)).Entities.FirstOrDefault();
                     }
                     if (lookup == null && att.AttributeType.Value == AttributeTypeCode.Lookup)
                     {
@@ -216,7 +207,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                         lookup[mto1Meta.PrimaryNameAttribute] = kv.Value;
                         lookup.Id = XrmCore.CreateEntity(lookup);
                     }
-                    entity.SetAttributeValue(kv.Key, lookup.ToEntityReference());
+                    entity.SetAttributeValue(att.LogicalName, lookup.ToEntityReference());
                     break;
 
                 case AttributeTypeCode.Memo:
@@ -236,7 +227,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     Guid g;
                     if (Guid.TryParse(kv.Value, out g))
                     {
-                        entity.SetAttributeValue(kv.Key, new EntityReference("systemuser", g));
+                        entity.SetAttributeValue(att.LogicalName, new EntityReference("systemuser", g));
                     }
                     else
                     {
@@ -245,7 +236,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                         {
                             throw new InvalidOperationException(string.Format("The system user '{0}' does not exist", kv.Value));
                         }
-                        entity.SetAttributeValue(kv.Key, owner.ToEntityReference());
+                        entity.SetAttributeValue(att.LogicalName, owner.ToEntityReference());
                     }
                     break;
 
@@ -255,7 +246,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     int iOption;
                     if (int.TryParse(kv.Value, out iOption))
                     {
-                        entity.SetAttributeValue(kv.Key, new OptionSetValue(iOption));
+                        entity.SetAttributeValue(att.LogicalName, new OptionSetValue(iOption));
                     }
                     else
                     {
@@ -278,7 +269,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                         }
                         else
                         {
-                            entity.SetAttributeValue(kv.Key, opMeta.Value.Value);
+                            entity.SetAttributeValue(att.LogicalName, opMeta.Value.Value);
                         }
                     }
                     break;
@@ -286,7 +277,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 case AttributeTypeCode.Uniqueidentifier:
                     if (Guid.TryParse(kv.Value, out g))
                     {
-                        entity.SetAttributeValue(kv.Key, g);
+                        entity.SetAttributeValue(att.LogicalName, g);
                     }
                     else
                     {

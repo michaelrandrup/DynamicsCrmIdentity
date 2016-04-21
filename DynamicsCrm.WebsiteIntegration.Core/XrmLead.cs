@@ -12,10 +12,24 @@ namespace DynamicsCrm.WebsiteIntegration.Core
     {
         public static Guid CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
         {
-            bool match = Convert.ToBoolean(settings.GetValueOrDefault<string>("match", bool.FalseString));
             Entity lead = new Entity("lead", Guid.NewGuid());
-            string email = properties.GetValueOrDefault<string>("email", "");
-            string accountId = properties.GetValueOrDefault<string>("accountid", "");
+            bool match = Convert.ToBoolean(settings.GetValueOrDefault<string>("match", bool.FalseString));
+            string email = properties.GetValueOrDefault<string>("emailaddress1", "");
+            string fullname = properties.GetValueOrDefault<string>("fullname", "", true);
+            if (!string.IsNullOrEmpty(fullname))
+            {
+                if (fullname.IndexOf(' ')>0)
+                {
+                    properties.Add("firstname", fullname.Substring(0, fullname.IndexOf(' ')));
+                    properties.Add("lastname", fullname.Substring(fullname.IndexOf(' ')+1));
+                }
+                else
+                {
+                    properties.Add("firstname", fullname);
+                }
+            }
+            string accountId = properties.GetValueOrDefault<string>("companyname", "");
+
             if (match && !string.IsNullOrEmpty(email))
             {
                 Entity contact = null;
@@ -33,13 +47,13 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     }
                     if (account != null)
                     {
-                        lead["accountid"] = account.ToEntityReference();
+                        lead["parentaccountid"] = account.ToEntityReference();
                     }
                 }
                 contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
                 if (contact != null)
                 {
-                    lead["contactid"] = contact.ToEntityReference();
+                    lead["parentcontactid"] = contact.ToEntityReference();
                     if (string.IsNullOrEmpty(accountId))
                     {
                         accountId = contact.GetAttributeValue<string>("parentcustomerid_name");

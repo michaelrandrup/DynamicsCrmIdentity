@@ -9,11 +9,15 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 {
     public static class DictionaryExtensions
     {
-        public static TValue GetValueOrDefault<TValue>(this IDictionary<string, TValue> dict, string key, TValue defaultValue)
+        public static TValue GetValueOrDefault<TValue>(this IDictionary<string, TValue> dict, string key, TValue defaultValue, bool removeAfterGet = false)
         {
             TValue value = defaultValue;
             if (dict.TryGetValue(key, out value))
             {
+                if (removeAfterGet)
+                {
+                    dict.Remove(key);
+                }
                 return value;
             }
             return defaultValue;
