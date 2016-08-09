@@ -201,22 +201,29 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     }
                     Entity lookup = null;
                     Guid gLookup;
-                    EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencingEntity, EntityFilters.Entity);
+                    EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencedEntity, EntityFilters.Entity);
                     if (Guid.TryParse(kv.Value, out gLookup))
                     {
                         lookup = XrmCore.Retrieve(mto1.ReferencingEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
                     }
                     else
                     {
-                        lookup = XrmCore.RetrieveByAttribute(mto1.ReferencingEntity, mto1Meta.PrimaryNameAttribute, kv.Value, new ColumnSet(mto1Meta.PrimaryIdAttribute)).Entities.FirstOrDefault();
+                        if (!string.IsNullOrEmpty(kv.Value))
+                        {
+                            lookup = XrmCore.RetrieveByAttribute(mto1.ReferencedEntity, mto1Meta.PrimaryNameAttribute, kv.Value, new ColumnSet(mto1Meta.PrimaryIdAttribute)).Entities.FirstOrDefault();
+                        }
+                        
                     }
-                    if (lookup == null && att.AttributeType.Value == AttributeTypeCode.Lookup)
+                    if (!string.IsNullOrEmpty(kv.Value) && lookup == null && att.AttributeType.Value == AttributeTypeCode.Lookup)
                     {
                         lookup = new Entity(mto1Meta.LogicalName, Guid.NewGuid());
                         lookup[mto1Meta.PrimaryNameAttribute] = kv.Value;
                         lookup.Id = XrmCore.CreateEntity(lookup);
                     }
-                    entity.SetAttributeValue(kv.Key, lookup.ToEntityReference());
+                    if (lookup != null)
+                    {
+                        entity.SetAttributeValue(kv.Key, lookup.ToEntityReference());
+                    }
                     break;
 
                 case AttributeTypeCode.Memo:

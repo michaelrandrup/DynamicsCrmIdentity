@@ -10,19 +10,32 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 {
     public static class XrmLead
     {
-        public static Guid CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
+        public class XrmLeadResult
         {
+            public string LeadId { get; set; }
+            public string ContactId { get; set; }
+            public string AccountId { get; set; }
+            public string Email { get; set; }
+            public string FullName { get; set; }
+            public string CompanyName { get; set; }
+
+
+        }
+        public static XrmLeadResult CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
+        {
+            XrmLeadResult result = new XrmLeadResult();
             bool match = Convert.ToBoolean(settings.GetValueOrDefault<string>("match", bool.FalseString));
             Entity lead = new Entity("lead", Guid.NewGuid());
-            string email = properties.GetValueOrDefault<string>("email", "");
-            string accountId = properties.GetValueOrDefault<string>("accountid", "");
+            string email = properties.GetValueOrDefault<string>("emailaddress1", "");
+            string accountId = properties.GetValueOrDefault<string>("accountid", properties.GetValueOrDefault<string>("companyname", ""));
+            Entity contact = null;
+            Entity account = null;
             if (match && !string.IsNullOrEmpty(email))
             {
-                Entity contact = null;
+                
                 if (!string.IsNullOrEmpty(accountId))
                 {
                     Guid g;
-                    Entity account = null;
                     if (Guid.TryParse(accountId, out g))
                     {
                         account = XrmCore.Retrieve("account", g);
@@ -31,37 +44,52 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     {
                         account = XrmCore.RetrieveByAttribute("account", "name", accountId).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
                     }
-                    if (account != null)
-                    {
-                        lead["accountid"] = account.ToEntityReference();
-                    }
                 }
+
                 contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
                 if (contact != null)
                 {
                     lead["contactid"] = contact.ToEntityReference();
-                    if (string.IsNullOrEmpty(accountId))
+                    result.ContactId = contact.Id.ToString();
+                    if (accountId == null && contact.Contains("parentcustomerid"))
                     {
-                        accountId = contact.GetAttributeValue<string>("parentcustomerid_name");
+                        account = XrmCore.Retrieve("account", contact.GetAttributeValue<EntityReference>("parentcustomerid").Id);
                     }
+                    //if (string.IsNullOrEmpty(accountId))
+                    //{
+                    //    accountId = contact.GetAttributeValue<string>("parentcustomerid_name");
+                    //}
+                }
+
+                if (account != null)
+                {
+                    lead["accountid"] = account.ToEntityReference();
+                    result.AccountId = account.Id.ToString();
                 }
             }
+
+            result.CompanyName = properties.GetValueOrDefault<string>("companyname", account != null && account.Contains("name") ? account.GetAttributeValue<string>("name") : "");
+            result.Email = email;
+            result.FullName = properties.GetValueOrDefault<string>("fullname", contact != null && contact.Contains("fullname") ? contact.GetAttributeValue<string>("fullname") : "");
 
             // Apply properties
             EntityMetadata meta = XrmCore.RetrieveMetadata("lead", EntityFilters.All, connection);
             foreach (KeyValuePair<string, string> kv in properties)
             {
-                lead.SetAttributeMetaValue(kv,settings, meta);
+                lead.SetAttributeMetaValue(kv, settings, meta);
             }
+
             Guid Id = XrmCore.CreateEntity(lead);
-            
+            result.LeadId = Id.ToString();
+
             // Apply actions
             foreach (KeyValuePair<string, string> kv in actions)
             {
                 lead.ApplyAction(kv);
             }
 
-            return lead.Id;
+
+            return result;
 
         }
 

@@ -61,13 +61,27 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 
 
         }
-        public static Entity Retrieve(string EntityName, Guid Id, ColumnSet Columns = null, CrmConnection connection = null)
+        public static Entity Retrieve(string EntityName, Guid Id, ColumnSet Columns = null, CrmConnection connection = null, bool CacheResults = true)
         {
             Columns = Columns ?? new ColumnSet(true);
-            using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(connection ?? XrmConnection.Connection))
+
+            if (CacheResults)
             {
-                return service.Retrieve(EntityName, Id, Columns);
+                using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(connection ?? XrmConnection.Connection))
+                {
+                    return service.Retrieve(EntityName, Id, Columns);
+                }
             }
+            else
+            {
+                OrganizationService srv = new OrganizationService(connection ?? XrmConnection.Connection);
+                using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(srv))
+                {
+                    return service.Retrieve(EntityName, Id, Columns);
+                }
+            }
+            
+
         }
 
         public static EntityMetadata RetrieveMetadata(string entityName, Microsoft.Xrm.Sdk.Metadata.EntityFilters filter = EntityFilters.All, CrmConnection connection = null)
