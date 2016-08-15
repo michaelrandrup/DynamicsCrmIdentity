@@ -87,6 +87,7 @@
     <Compile Include="ProfileDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="XrmConnection.cs" />
+    <Compile Include="XrmEmail.cs" />
     <Compile Include="XrmLead.cs" />
     <Compile Include="XrmMarketing.cs" />
     <Compile Include="XrmProfile.cs" />
