@@ -18,8 +18,8 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             public string Email { get; set; }
             public string FullName { get; set; }
             public string CompanyName { get; set; }
-
-
+            public DateTime ResultDate { get; set; } = DateTime.UtcNow;
+            public string Version { get; set; } = "1";
         }
         public static XrmLeadResult CreateLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
         {

@@ -67,7 +67,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 case "ASSIGN":
                     FilterExpression filter = new FilterExpression(LogicalOperator.Or);
                     filter.AddCondition("fullname", ConditionOperator.Like, new object[] { actionArgs[0] });
-                    filter.AddCondition("emailaddress1", ConditionOperator.Like, new object[] { actionArgs[0] });
+                    filter.AddCondition("internalemailaddress", ConditionOperator.Like, new object[] { actionArgs[0] });
                     Entity owner = XrmCore.RetrieveByFilter("systemuser", filter, new ColumnSet("systemuserid")).Entities.FirstOrDefault();
                     if (owner == null)
                     {

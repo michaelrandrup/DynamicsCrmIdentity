@@ -173,6 +173,9 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             }
         }
 
+
+
+
         public static bool BulkSave(EntityCollection entities, CrmConnection connection = null)
         {
             OrganizationService srv = new OrganizationService(connection ?? XrmConnection.Connection);
@@ -229,6 +232,209 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 return id;
             }
         }
+
+        public static void SetAttributeField(Entity entity, EntityMetadata metadata, AttributeMetadata att, string attributeName, string attributeValue)
+        {
+            Guid g;
+            switch (att.AttributeType.Value)
+            {
+                case AttributeTypeCode.Boolean:
+                    entity[attributeName] = Convert.ToBoolean(attributeValue);
+                    break;
+
+                case AttributeTypeCode.DateTime:
+                    DateTime dt;
+                    if (DateTime.TryParse(attributeValue, out dt))
+                    {
+                        entity[attributeName] = dt;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.Decimal:
+                case AttributeTypeCode.Money:
+                    decimal dec;
+                    if (decimal.TryParse(attributeValue, out dec))
+                    {
+                        if (att.AttributeType.Value == AttributeTypeCode.Money)
+                        {
+                            entity[attributeName] = new Money(dec);
+                        }
+                        else
+                        {
+                            entity[attributeName] = dec;
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.Double:
+                    double dou;
+                    if (double.TryParse(attributeValue, out dou))
+                    {
+                        entity[attributeName] = dou;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.Integer:
+                    int i;
+                    if (int.TryParse(attributeValue, out i))
+                    {
+                        entity[attributeName] = i;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.BigInt:
+                    long l;
+                    if (long.TryParse(attributeValue, out l))
+                    {
+                        entity[attributeName] = l;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.Lookup:
+                case AttributeTypeCode.Customer:
+                    //Guid g;
+                    //string[] v = attributeValue.Split(',');
+                    //if (Guid.TryParse(v[0], out g))
+                    //{
+                    //    entity[attributeName] = new EntityReference(v[1], g));
+                    //}
+                    //else
+                    //{
+                    //    throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                    //}
+                    OneToManyRelationshipMetadata mto1 = metadata.ManyToOneRelationships.FirstOrDefault(x => x.ReferencedAttribute.Equals(attributeName, StringComparison.OrdinalIgnoreCase));
+                    if (mto1 == null)
+                    {
+                        throw new InvalidOperationException(string.Format("The Many-To-One relationship for the attribute '{0}' does not exist", attributeName));
+                    }
+                    Entity lookup = null;
+                    Guid gLookup;
+                    EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencedEntity, EntityFilters.Entity);
+                    if (Guid.TryParse(attributeValue, out gLookup))
+                    {
+                        lookup = XrmCore.Retrieve(mto1.ReferencingEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(attributeValue))
+                        {
+                            lookup = XrmCore.RetrieveByAttribute(mto1.ReferencedEntity, mto1Meta.PrimaryNameAttribute, attributeValue, new ColumnSet(mto1Meta.PrimaryIdAttribute)).Entities.FirstOrDefault();
+                        }
+
+                    }
+                    if (!string.IsNullOrEmpty(attributeValue) && lookup == null && att.AttributeType.Value == AttributeTypeCode.Lookup)
+                    {
+                        lookup = new Entity(mto1Meta.LogicalName, Guid.NewGuid());
+                        lookup[mto1Meta.PrimaryNameAttribute] = attributeValue;
+                        lookup.Id = XrmCore.CreateEntity(lookup);
+                    }
+                    if (lookup != null)
+                    {
+                        entity[attributeName] = lookup.ToEntityReference();
+                    }
+                    break;
+
+                case AttributeTypeCode.Memo:
+                case AttributeTypeCode.String:
+                    {
+                        entity[attributeName] = attributeValue;
+                    }
+                    break;
+
+                case AttributeTypeCode.Owner:
+                    if (Guid.TryParse(attributeValue, out g))
+                    {
+                        entity[attributeName] = new EntityReference("systemuser", g);
+                    }
+                    else
+                    {
+                        Entity owner = XrmCore.RetrieveByAttribute("systemuser", "fullname", attributeValue, new ColumnSet("systemuserid")).Entities.FirstOrDefault();
+                        if (owner == null)
+                        {
+                            throw new InvalidOperationException(string.Format("The system user '{0}' does not exist", attributeValue));
+                        }
+                        entity[attributeName] = owner.ToEntityReference();
+                    }
+                    break;
+
+                case AttributeTypeCode.Picklist:
+                case AttributeTypeCode.State:
+                case AttributeTypeCode.Status:
+                    int iOption;
+                    if (int.TryParse(attributeValue, out iOption))
+                    {
+                        entity[attributeName] = new OptionSetValue(iOption);
+                    }
+                    else
+                    {
+                        OptionMetadata opMeta = null;
+                        if (att.AttributeType.Value == AttributeTypeCode.Picklist)
+                        {
+                            opMeta = (att as PicklistAttributeMetadata).OptionSet.Options.FirstOrDefault(x => x.Label.LocalizedLabels.Any(lab => lab.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase)) || x.Label.UserLocalizedLabel.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase));
+                        }
+                        else if (att.AttributeType.Value == AttributeTypeCode.State)
+                        {
+                            opMeta = (att as StateAttributeMetadata).OptionSet.Options.FirstOrDefault(x => x.Label.LocalizedLabels.Any(lab => lab.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase)) || x.Label.UserLocalizedLabel.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase));
+                        }
+                        else if (att.AttributeType.Value == AttributeTypeCode.Status)
+                        {
+                            opMeta = (att as StatusAttributeMetadata).OptionSet.Options.FirstOrDefault(x => x.Label.LocalizedLabels.Any(lab => lab.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase)) || x.Label.UserLocalizedLabel.Label.Equals(attributeValue, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (opMeta == null)
+                        {
+                            throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
+                        }
+                        else
+                        {
+                            entity[attributeName] = opMeta.Value.Value;
+                        }
+                    }
+                    break;
+
+                case AttributeTypeCode.Uniqueidentifier:
+                    if (Guid.TryParse(attributeValue, out g))
+                    {
+                        entity[attributeName] = g;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName,attributeValue, att.AttributeType.Value.ToString()));
+                    }
+                    break;
+
+                case AttributeTypeCode.PartyList:
+                case AttributeTypeCode.CalendarRules:
+                case AttributeTypeCode.Virtual:
+                case AttributeTypeCode.ManagedProperty:
+                case AttributeTypeCode.EntityName:
+                    throw new NotImplementedException(string.Format("The attribute type {0} is not supported", att.AttributeType.Value.ToString()));
+
+                default:
+                    break;
+            }
+        }
+
+
         public static int GetNextId(string name)
         {
             EntityCollection col = RetrieveByAttribute("appl_counter", "appl_name", WebUserCounterName, CacheResults: false);
