@@ -49,7 +49,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
                 if (contact != null)
                 {
-                    lead["contactid"] = contact.ToEntityReference();
+                    lead["parentcontactid"] = contact.ToEntityReference();
                     result.ContactId = contact.Id.ToString();
                     if (accountId == null && contact.Contains("parentcustomerid"))
                     {
@@ -63,7 +63,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
 
                 if (account != null)
                 {
-                    lead["accountid"] = account.ToEntityReference();
+                    lead["parentaccountid"] = account.ToEntityReference();
                     result.AccountId = account.Id.ToString();
                 }
             }
