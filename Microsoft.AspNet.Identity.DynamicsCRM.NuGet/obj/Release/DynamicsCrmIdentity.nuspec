@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>DynamicsCrmIdentity</id>
+    <version>2.0.0</version>
+    <title>Microsoft ASP.NET Claims Identity Provider for Dynamics 365</title>
+    <authors>MichaelRandrup</authors>
+    <owners>MichaelRandrup</owners>
+    <licenseUrl>https://github.com/michaelrandrup/DynamicsCrmIdentity/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/michaelrandrup/DynamicsCrmIdentity</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Use Microsoft Dynamics 365 as backend-store and management for your Microsoft Identity Claims-based websites</description>
+    <summary>Microsoft.AspNet.Identity.DynamicsCRM.NuGet</summary>
+    <releaseNotes>Visit GitHub for usage examples</releaseNotes>
+    <copyright>Copyright © MichaelRandrup</copyright>
+    <tags>ASP.NET Claims Identity Dynamics 365</tags>
+    <dependencies>
+      <group targetFramework="net45">
+        <dependency id="Microsoft.AspNet.Identity.Core" version="2.2.1" />
+        <dependency id="Microsoft.IdentityModel" version="6.1.7600.16394" />
+      </group>
+      <group targetFramework="net461">
+        <dependency id="Microsoft.CrmSdk.CoreAssemblies" version="8.2.0.2" />
+        <dependency id="Microsoft.CrmSdk.Deployment" version="8.2.0.2" />
+      </group>
+      <group targetFramework="net452">
+        <dependency id="Microsoft.CrmSdk.Extensions" version="7.1.0.1" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\bin\Release\DynamicsCrm.WebsiteIntegration.Core.dll" target="lib\net461\DynamicsCrm.WebsiteIntegration.Core.dll" exclude="" />
+    <file src="C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\bin\Release\DynamicsCrm.WebsiteIntegration.Core.pdb" target="lib\net461\DynamicsCrm.WebsiteIntegration.Core.pdb" exclude="" />
+    <file src="C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCrm\bin\Release\Microsoft.AspNet.Identity.DynamicsCrm.dll" target="lib\net461\Microsoft.AspNet.Identity.DynamicsCrm.dll" exclude="" />
+    <file src="C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCrm\bin\Release\Microsoft.AspNet.Identity.DynamicsCrm.pdb" target="lib\net461\Microsoft.AspNet.Identity.DynamicsCrm.pdb" exclude="" />
+    <file src="C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\Readme.txt" target="" exclude="" />
+  </files>
+</package>

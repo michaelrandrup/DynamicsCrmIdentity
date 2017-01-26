@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D390FF13-123C-41DC-98A0-F23CEB6DC631}"
 EndProject
@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions", "Solutions", "{
 		Solutions\Websiteintegration_0_3_0.zip = Solutions\Websiteintegration_0_3_0.zip
 		Solutions\Websiteintegration_0_3_0_managed.zip = Solutions\Websiteintegration_0_3_0_managed.zip
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{8AE5C896-BF5E-4830-9D1F-62322AFFFA63}"
+EndProject
+Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "Microsoft.AspNet.Identity.DynamicsCRM.NuGet", "Microsoft.AspNet.Identity.DynamicsCRM.NuGet\Microsoft.AspNet.Identity.DynamicsCRM.NuGet.nuproj", "{687ADB22-D0F3-4A31-B621-6799FC69AFA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +39,10 @@ Global
 		{5B4D27D2-F2BF-4AB7-8B4E-5EED126FFEB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B4D27D2-F2BF-4AB7-8B4E-5EED126FFEB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B4D27D2-F2BF-4AB7-8B4E-5EED126FFEB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{687ADB22-D0F3-4A31-B621-6799FC69AFA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{687ADB22-D0F3-4A31-B621-6799FC69AFA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{687ADB22-D0F3-4A31-B621-6799FC69AFA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{687ADB22-D0F3-4A31-B621-6799FC69AFA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,5 +51,6 @@ Global
 		{A1C11E2D-7BB2-4C79-8D4C-DD6F20F28C39} = {D390FF13-123C-41DC-98A0-F23CEB6DC631}
 		{215BB790-5F6B-47E8-B28D-94B98B713361} = {D390FF13-123C-41DC-98A0-F23CEB6DC631}
 		{5B4D27D2-F2BF-4AB7-8B4E-5EED126FFEB5} = {D390FF13-123C-41DC-98A0-F23CEB6DC631}
+		{687ADB22-D0F3-4A31-B621-6799FC69AFA1} = {8AE5C896-BF5E-4830-9D1F-62322AFFFA63}
 	EndGlobalSection
 EndGlobal

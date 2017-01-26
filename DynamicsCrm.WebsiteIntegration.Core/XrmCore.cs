@@ -80,7 +80,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     return service.Retrieve(EntityName, Id, Columns);
                 }
             }
-            
+
 
         }
 
@@ -113,7 +113,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
         {
             FilterExpression filter = new FilterExpression(LogicalOperator.And);
             filter.AddCondition(new ConditionExpression(AttributeName, ConditionOperator.Equal, AttributeValue));
-            return RetrieveByFilter(EntityName, filter,columns, connection, CacheResults);
+            return RetrieveByFilter(EntityName, filter, columns, connection, CacheResults);
         }
 
         public static EntityCollection RetrieveByFilter(string EntityName, FilterExpression Filter, ColumnSet columns = null, CrmConnection connection = null, bool CacheResults = true)
@@ -128,9 +128,23 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 {
                     query.PageInfo = new PagingInfo() { PageNumber = 1, PagingCookie = null, Count = 5000 };
                     EntityCollection ResultCollection = new EntityCollection();
+                    EntityCollection col = null;
                     while (true)
                     {
-                        EntityCollection col = service.RetrieveMultiple(query);
+                        try
+                        {
+                            col = service.RetrieveMultiple(query);
+                        }
+                        catch (System.ServiceModel.Security.MessageSecurityException ex1)
+                        {
+                            throw ex1;
+                        }
+                        catch (FaultException ex)
+                        {
+
+                            throw ex;
+                        }
+
                         ResultCollection.EntityName = col.EntityName;
                         ResultCollection.Entities.AddRange(col.Entities);
                         if (col.MoreRecords)
@@ -418,7 +432,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     }
                     else
                     {
-                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName,attributeValue, att.AttributeType.Value.ToString()));
+                        throw new InvalidOperationException(string.Format("The {2} attribute '{0}' contains an invalid value of {1}", attributeName, attributeValue, att.AttributeType.Value.ToString()));
                     }
                     break;
 

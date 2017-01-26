@@ -1,0 +1,5 @@
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\bin\Release\DynamicsCrmIdentity.2.0.0.nupkg
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\bin\Release\DynamicsCrmIdentity.2.0.0.symbols.nupkg
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\obj\Release\DynamicsCrmIdentity.nuspec
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\obj\Release\DynamicsCrmIdentity.2.0.0.nupkg
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\Microsoft.AspNet.Identity.DynamicsCRM.NuGet\obj\Release\DynamicsCrmIdentity.2.0.0.symbols.nupkg
