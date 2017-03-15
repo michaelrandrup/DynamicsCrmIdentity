@@ -113,6 +113,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
         {
             FilterExpression filter = new FilterExpression(LogicalOperator.And);
             filter.AddCondition(new ConditionExpression(AttributeName, ConditionOperator.Equal, AttributeValue));
+            filter.AddCondition("statecode", ConditionOperator.Equal, 0);
             return RetrieveByFilter(EntityName, filter, columns, connection, CacheResults);
         }
 

@@ -32,7 +32,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             Entity account = null;
             if (match && !string.IsNullOrEmpty(email))
             {
-                
+
                 if (!string.IsNullOrEmpty(accountId))
                 {
                     Guid g;
@@ -88,6 +88,133 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 lead.ApplyAction(kv);
             }
 
+
+            return result;
+
+        }
+
+        public static XrmLeadResult CaptureLead(Dictionary<string, string> properties, IDictionary<string, string> settings, IDictionary<string, string> actions, CrmConnection connection = null)
+        {
+            XrmLeadResult result = new XrmLeadResult();
+            bool match = Convert.ToBoolean(settings.GetValueOrDefault<string>("match", bool.FalseString));
+            Entity lead = new Entity("lead", Guid.NewGuid());
+            string email = properties.GetValueOrDefault<string>("emailaddress1", "");
+            result.Email = email;
+
+            string accountId = properties.GetValueOrDefault<string>("accountid", properties.GetValueOrDefault<string>("companyname", ""));
+            Entity contact = null;
+            Entity account = null;
+
+            contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
+            if (contact != null)
+            {
+                result.ContactId = contact.Id.ToString();
+                result.FullName = contact.GetAttributeValue<string>("fullname");
+                if (contact.Contains("parentcustomerid"))
+                {
+                    EntityReference accountReference = contact.GetAttributeValue<EntityReference>("parentcustomerid");
+                    result.AccountId = accountReference.Id.ToString();
+                    result.CompanyName = accountReference.Name;
+                    lead["parentaccountid"] = accountReference;
+                }
+
+                // return matched contact result
+                return result;
+            }
+            else
+            {
+                // No contact match. Match against an existing lead
+                EntityCollection leadCollection = XrmCore.RetrieveByAttribute("lead", "emailaddress1", email, new Microsoft.Xrm.Sdk.Query.ColumnSet("createdon", "fullname", "parentcontactid", "parentaccountid", "companyname"));
+                if (leadCollection.Entities.Count > 0)
+                {
+                    lead = leadCollection.Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).First();
+                    result.LeadId = lead.Id.ToString();
+                    if (lead.Contains("fullname"))
+                    {
+                        result.FullName = lead.GetAttributeValue<string>("fullname");
+                    }
+                    EntityReference er = null;
+                    if (lead.Contains("parentaccountid"))
+                    {
+                        er = lead.GetAttributeValue<EntityReference>("parentaccountid");
+                        Entity parentAccount = XrmCore.Retrieve("account", er.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet("statecode"));
+                        if (parentAccount != null && parentAccount.GetAttributeValue<OptionSetValue>("statecode").Value == 0)
+                        {
+                            result.AccountId = er.Id.ToString();
+                            result.CompanyName = er.Name;
+                        }
+                    }
+                    else if (lead.Contains("companyname"))
+                    {
+                        result.CompanyName = lead.GetAttributeValue<string>("companyname");
+                    }
+                    if (lead.Contains("parentcontactid"))
+                    {
+                        er = lead.GetAttributeValue<EntityReference>("parentcontactid");
+                        Entity parentContact = XrmCore.Retrieve("contact", er.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet("statecode"));
+                        if (parentContact != null && parentContact.GetAttributeValue<OptionSetValue>("statecode").Value == 0)
+                        {
+                            result.ContactId = er.Id.ToString();
+                        }
+                    }
+
+                    // result matched lead result
+                    return result;
+                }
+            }
+
+            //
+            // No contact or lead match. Create a new lead in the system
+            //
+            if (!string.IsNullOrEmpty(accountId))
+            {
+                Guid g;
+                if (Guid.TryParse(accountId, out g))
+                {
+                    account = XrmCore.Retrieve("account", g);
+                }
+                else
+                {
+                    account = XrmCore.RetrieveByAttribute("account", "name", accountId).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
+                }
+
+                if (account != null)
+                {
+                    lead["parentaccountid"] = account.ToEntityReference();
+                    result.AccountId = account.Id.ToString();
+                    result.CompanyName = account.GetAttributeValue<string>("name");
+                }
+            }
+
+            if (account == null)
+            {
+                result.CompanyName = properties.GetValueOrDefault<string>("companyname", "");
+            }
+
+            result.FullName = properties.GetValueOrDefault<string>("fullname", "");
+            if (string.IsNullOrEmpty(result.FullName))
+            {
+                if (properties.ContainsKey("firstname") && properties.ContainsKey("lastname"))
+                {
+                    result.FullName = string.Concat(properties.GetValueOrDefault<string>("firstname", ""), " ", properties.GetValueOrDefault<string>("lastname", ""));
+                }
+            }
+
+            // Apply properties
+            EntityMetadata meta = XrmCore.RetrieveMetadata("lead", EntityFilters.All, connection);
+            foreach (KeyValuePair<string, string> kv in properties)
+            {
+                lead.SetAttributeMetaValue(kv, settings, meta);
+            }
+
+            Guid Id = XrmCore.CreateEntity(lead);
+            result.LeadId = Id.ToString();
+
+            // Apply actions
+            foreach (KeyValuePair<string, string> kv in actions)
+            {
+                lead.ApplyAction(kv);
+            }
 
             return result;
 

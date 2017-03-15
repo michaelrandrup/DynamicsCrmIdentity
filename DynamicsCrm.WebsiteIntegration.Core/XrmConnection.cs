@@ -41,6 +41,21 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             set { _ConnectionName = value; }
         }
 
+        public static bool IsAlive
+        {
+            get
+            {
+                return _Connection != null;
+            }
+        }
+        public static string ConnectionString
+        {
+            set
+            {
+                _Connection = CrmConnection.Parse(value);
+            }
+        }
+
 
         #endregion
 
