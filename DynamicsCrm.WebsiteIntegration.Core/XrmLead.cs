@@ -105,7 +105,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             Entity contact = null;
             Entity account = null;
 
-            contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
+            contact = XrmCore.RetrieveByAttribute("contact", "emailaddress1", email,CacheResults: false).Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).FirstOrDefault();
             if (contact != null)
             {
                 result.ContactId = contact.Id.ToString();
@@ -124,7 +124,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
             else
             {
                 // No contact match. Match against an existing lead
-                EntityCollection leadCollection = XrmCore.RetrieveByAttribute("lead", "emailaddress1", email, new Microsoft.Xrm.Sdk.Query.ColumnSet("createdon", "fullname", "parentcontactid", "parentaccountid", "companyname"));
+                EntityCollection leadCollection = XrmCore.RetrieveByAttribute("lead", "emailaddress1", email, new Microsoft.Xrm.Sdk.Query.ColumnSet("createdon", "fullname", "parentcontactid", "parentaccountid", "companyname"), CacheResults: false);
                 if (leadCollection.Entities.Count > 0)
                 {
                     lead = leadCollection.Entities.OrderByDescending(x => x.GetAttributeValue<DateTime>("createdon")).First();
