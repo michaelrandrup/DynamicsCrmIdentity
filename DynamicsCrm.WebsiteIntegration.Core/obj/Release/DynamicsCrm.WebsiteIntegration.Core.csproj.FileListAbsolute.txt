@@ -33,3 +33,4 @@ C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteInte
 C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\bin\Release\Microsoft.Xrm.Sdk.Deployment.xml
 C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\obj\Release\DynamicsCrm.WebsiteIntegration.Core.dll
 C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\obj\Release\DynamicsCrm.WebsiteIntegration.Core.pdb
+C:\Users\MichaelRandrup\Source\Repos\DynamicsCrmIdentity\DynamicsCrm.WebsiteIntegration.Core\obj\Release\DynamicsCrm.WebsiteIntegration.Core.csprojResolveAssemblyReference.cache

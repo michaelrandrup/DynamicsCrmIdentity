@@ -181,6 +181,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                 if (account != null)
                 {
                     lead["parentaccountid"] = account.ToEntityReference();
+                    properties.Remove("accountid");
                     result.AccountId = account.Id.ToString();
                     result.CompanyName = account.GetAttributeValue<string>("name");
                 }

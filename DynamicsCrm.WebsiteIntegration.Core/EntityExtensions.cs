@@ -204,7 +204,7 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     EntityMetadata mto1Meta = XrmCore.RetrieveMetadata(mto1.ReferencedEntity, EntityFilters.Entity);
                     if (Guid.TryParse(kv.Value, out gLookup))
                     {
-                        lookup = XrmCore.Retrieve(mto1.ReferencingEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
+                        lookup = XrmCore.Retrieve(mto1.ReferencedEntity, gLookup, new ColumnSet(mto1Meta.PrimaryIdAttribute));
                     }
                     else
                     {
