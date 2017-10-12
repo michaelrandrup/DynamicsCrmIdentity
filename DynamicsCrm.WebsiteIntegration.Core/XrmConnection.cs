@@ -1,10 +1,14 @@
 ﻿using Microsoft.Xrm.Client;
+using Microsoft.Xrm.Client.Services;
+using Microsoft.Xrm.Sdk;
 
 namespace DynamicsCrm.WebsiteIntegration.Core
 {
     // Url=https://contoso.crm.dynamics.com; Username=jsmith@live-int.com; Password=passcode; DeviceID=contoso-ba9f6b7b2e6d; DevicePassword=passcode
     public static class XrmConnection
     {
+
+        
 
 
         private static CrmConnection _Connection = null;

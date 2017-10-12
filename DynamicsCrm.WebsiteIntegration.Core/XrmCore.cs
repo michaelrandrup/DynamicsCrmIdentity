@@ -113,16 +113,13 @@ namespace DynamicsCrm.WebsiteIntegration.Core
         {
             FilterExpression filter = new FilterExpression(LogicalOperator.And);
             filter.AddCondition(new ConditionExpression(AttributeName, ConditionOperator.Equal, AttributeValue));
-            filter.AddCondition("statecode", ConditionOperator.Equal, 0);
+            //filter.AddCondition("statecode", ConditionOperator.Equal, 0);
             return RetrieveByFilter(EntityName, filter, columns, connection, CacheResults);
         }
 
-        public static EntityCollection RetrieveByFilter(string EntityName, FilterExpression Filter, ColumnSet columns = null, CrmConnection connection = null, bool CacheResults = true)
-        {
-            QueryExpression query = new QueryExpression(EntityName);
-            query.ColumnSet = columns ?? new ColumnSet(true);
-            query.Criteria = Filter;
 
+        public static EntityCollection RetrieveByQuery(QueryExpression query, CrmConnection connection = null, bool CacheResults = true)
+        {
             if (CacheResults)
             {
                 using (CrmOrganizationServiceContext service = new CrmOrganizationServiceContext(connection ?? XrmConnection.Connection))
@@ -186,6 +183,14 @@ namespace DynamicsCrm.WebsiteIntegration.Core
                     return ResultCollection;
                 }
             }
+        }
+
+        public static EntityCollection RetrieveByFilter(string EntityName, FilterExpression Filter, ColumnSet columns = null, CrmConnection connection = null, bool CacheResults = true)
+        {
+            QueryExpression query = new QueryExpression(EntityName);
+            query.ColumnSet = columns ?? new ColumnSet(true);
+            query.Criteria = Filter;
+            return RetrieveByQuery(query, connection, CacheResults);
         }
 
 
